@@ -1,0 +1,11 @@
+test:
+    env -u VIRTUAL_ENV uv run pytest
+
+test-watch:
+    env -u VIRTUAL_ENV uv run ptw .
+
+style-check:
+    env -u VIRTUAL_ENV uv run black --check src tests
+
+style-fix:
+    env -u VIRTUAL_ENV uv run black src tests
