@@ -6,6 +6,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
+from proxylens_server._version import __version__
 from proxylens_server.bootstrap import AppContainer, create_container
 from proxylens_server.config import ServerConfig
 from proxylens_server.infra.routes.blobs.router import (
@@ -41,7 +42,7 @@ def create_app(config: ServerConfig | None = None) -> FastAPI:
 
     app = FastAPI(
         title="ProxyLens Server",
-        version="0.1.0",
+        version=__version__,
         docs_url=None,
         redoc_url=None,
         lifespan=lifespan,

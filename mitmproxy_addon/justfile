@@ -1,11 +1,29 @@
+# Show available mitmproxy addon commands.
+help:
+    @just --list
+
+# Build and validate the mitmproxy addon distribution.
+build:
+    rm -rf dist
+    uv build
+    uvx twine check dist/*
+
+# Publish the mitmproxy addon distribution to the selected package index.
+publish repository='pypi': build
+    uvx twine upload --repository {{repository}} dist/*
+
+# Run the mitmproxy addon test suite.
 test:
     env -u VIRTUAL_ENV uv run pytest
 
+# Re-run the mitmproxy addon test suite on file changes.
 test-watch:
     env -u VIRTUAL_ENV uv run ptw .
 
+# Check addon code formatting.
 style-check:
     env -u VIRTUAL_ENV uv run black --check src tests
 
+# Format addon code.
 style-fix:
     env -u VIRTUAL_ENV uv run black src tests

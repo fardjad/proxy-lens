@@ -1,3 +1,4 @@
+from proxylens_mitmproxy._version import __version__
 from proxylens_mitmproxy.addon import ProxyLens
 from proxylens_mitmproxy.client import (
     DEFAULT_PROXYLENS_SERVER_BASE_URL,
@@ -19,4 +20,5 @@ __all__ = [
     "ResponderAddon",
     "SupportsProxyLensServerClient",
     "TestMitmProxy",
+    "__version__",
 ]

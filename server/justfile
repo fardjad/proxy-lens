@@ -1,14 +1,33 @@
+# Show available server commands.
+help:
+    @just --list
+
+# Run the development server with auto-reload.
 dev:
     env -u VIRTUAL_ENV uv run proxylens-server --reload
 
-test:
-    env -u VIRTUAL_ENV uv run pytest
+# Build and validate the server distribution.
+build:
+    rm -rf dist
+    uv build
+    uvx twine check dist/*
 
+# Publish the server distribution to the selected package index.
+publish repository='pypi': build
+    uvx twine upload --repository {{repository}} dist/*
+
+# Run the server test suite.
+test:
+    env -u VIRTUAL_ENV uv run python -m pytest
+
+# Re-run the server test suite on file changes.
 test-watch:
     env -u VIRTUAL_ENV uv run ptw .
 
+# Check server code formatting.
 style-check:
     env -u VIRTUAL_ENV uv run black --check src tests
 
+# Format server code.
 style-fix:
     env -u VIRTUAL_ENV uv run black src tests

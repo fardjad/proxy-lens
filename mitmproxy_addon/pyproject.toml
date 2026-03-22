@@ -1,9 +1,17 @@
 [project]
 name = "proxylens-mitmproxy"
-version = "0.1.0"
+dynamic = ["version"]
 description = "mitmproxy addon client for ProxyLens Server"
 readme = "README.md"
 requires-python = ">=3.14"
+keywords = ["http", "mitmproxy", "observability", "proxylens", "proxy", "websocket"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: Proxy Servers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "mitmproxy==12.2.1",
     "python-ulid>=3.1.0",
@@ -21,8 +29,19 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.version]
+path = "src/proxylens_mitmproxy/_version.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/proxylens_mitmproxy"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "README.md",
+    "docs",
+    "src/proxylens_mitmproxy",
+    "tests",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["src", "tests"]

@@ -1,9 +1,17 @@
 [project]
 name = "proxylens-server"
-version = "0.1.0"
+dynamic = ["version"]
 description = "ProxyLens Server"
 readme = "README.md"
 requires-python = ">=3.14"
+keywords = ["api", "fastapi", "http", "mitmproxy", "proxylens", "proxy"]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Internet :: Proxy Servers",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
   "fastapi==0.135.1",
   "pydantic>=2.11,<3",
@@ -27,8 +35,19 @@ dev = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.version]
+path = "src/proxylens_server/_version.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/proxylens_server"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "README.md",
+  "docs",
+  "src/proxylens_server",
+  "tests",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["src", "tests"]
