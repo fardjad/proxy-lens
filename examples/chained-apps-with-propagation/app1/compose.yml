@@ -1,0 +1,53 @@
+services:
+  caddy-app1:
+    image: caddy:2
+    depends_on:
+      - app1
+      - proxylens-addon-app1
+    environment:
+      HTTP_PROXY: http://proxylens-addon-app1:8080
+      HTTPS_PROXY: http://proxylens-addon-app1:8080
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../.data/tls:/certs:ro
+    networks:
+      - chained-apps-with-propagation
+
+  proxylens-addon-app1:
+    build:
+      context: ../../..
+      dockerfile: examples/chained-apps-with-propagation/proxy/Dockerfile
+    environment:
+      PROXYLENS_NODE_NAME: app1
+      PROXYLENS_SERVER_BASE_URL: http://proxylens-server:8000
+      PROXYLENS_MAX_CONCURRENT_REQUESTS_PER_HOST: "1"
+    expose:
+      - "8080"
+    networks:
+      - chained-apps-with-propagation
+
+  app1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      APP_BIND: 0.0.0.0
+      APP_PORT: "9443"
+      APP_CERT_FILE: /certs/localhost.crt
+      APP_KEY_FILE: /certs/localhost.key
+      DOWNSTREAM_URL: https://caddy-app2:8443/
+      HTTP_PROXY: http://proxylens-addon-app1:8080
+      HTTPS_PROXY: http://proxylens-addon-app1:8080
+    init: true
+    tty: true
+    volumes:
+      - ../.data/tls:/certs:ro
+    networks:
+      - chained-apps-with-propagation
+
+networks:
+  chained-apps-with-propagation:
+    name: proxylens-chained-apps-with-propagation
+    external: true

@@ -1,0 +1,41 @@
+# Show available example commands.
+help:
+    @just --list
+
+# Start the full example stack.
+start: _ensure-network _ensure-certs
+    mkdir -p .data/server
+    docker compose -f compose.yml up -d --build
+    docker compose -f app3/compose.yml up -d --build
+    docker compose -f app2/compose.yml up -d --build
+    docker compose -f app1/compose.yml up -d --build
+
+# Stop the example containers without removing volumes or the shared network.
+stop:
+    -docker compose -f app1/compose.yml down --remove-orphans
+    -docker compose -f app2/compose.yml down --remove-orphans
+    -docker compose -f app3/compose.yml down --remove-orphans
+    -docker compose -f compose.yml down --remove-orphans
+
+# Stop everything and remove local example state.
+clean:
+    -docker compose -f app1/compose.yml down -v --remove-orphans
+    -docker compose -f app2/compose.yml down -v --remove-orphans
+    -docker compose -f app3/compose.yml down -v --remove-orphans
+    -docker compose -f compose.yml down -v --remove-orphans
+    -docker network rm proxylens-chained-apps-with-propagation
+    rm -rf .data
+
+_ensure-network:
+    docker network inspect proxylens-chained-apps-with-propagation >/dev/null 2>&1 || docker network create proxylens-chained-apps-with-propagation >/dev/null
+
+_ensure-certs:
+    mkdir -p .data/tls
+    if [ ! -f .data/tls/localhost.crt ] || [ ! -f .data/tls/localhost.key ]; then \
+        openssl req -x509 -nodes -newkey rsa:2048 \
+            -keyout .data/tls/localhost.key \
+            -out .data/tls/localhost.crt \
+            -days 3650 \
+            -subj '/CN=localhost' \
+            -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' >/dev/null 2>&1; \
+    fi

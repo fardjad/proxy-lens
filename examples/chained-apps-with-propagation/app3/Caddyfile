@@ -1,0 +1,13 @@
+{
+    auto_https off
+}
+
+:8443 {
+    tls /certs/localhost.crt /certs/localhost.key
+
+    reverse_proxy https://app3:9443 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+}
