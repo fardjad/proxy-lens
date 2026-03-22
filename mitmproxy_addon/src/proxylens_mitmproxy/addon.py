@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+from collections import defaultdict, deque
 from collections.abc import Callable, Iterable
 from typing import Any, cast
 
@@ -38,6 +40,9 @@ from proxylens_mitmproxy.propagation import (
 _STATE_KEY = "proxylens_state"
 _REQUEST = "request"
 _RESPONSE = "response"
+DEFAULT_MAX_CONCURRENT_REQUESTS_PER_HOST_ENV_VAR = (
+    "PROXYLENS_MAX_CONCURRENT_REQUESTS_PER_HOST"
+)
 
 type FlowFilter = Callable[[http.HTTPFlow], bool]
 
@@ -55,7 +60,17 @@ class ProxyLens:
         request_id_generator: Callable[[], str] | None = None,
         blob_id_generator: Callable[[], str] | None = None,
         flow_filter: FlowFilter | None = None,
+        max_concurrent_requests_per_host: int | None = None,
+        max_concurrent_requests_per_host_env_var: str = (
+            DEFAULT_MAX_CONCURRENT_REQUESTS_PER_HOST_ENV_VAR
+        ),
     ) -> None:
+        resolved_max_concurrent_requests_per_host = (
+            resolve_max_concurrent_requests_per_host(
+                max_concurrent_requests_per_host=max_concurrent_requests_per_host,
+                env_var=max_concurrent_requests_per_host_env_var,
+            )
+        )
         self._client = client or ProxyLensServerClient(
             base_url=server_base_url,
             base_url_env_var=server_base_url_env_var,
@@ -65,50 +80,31 @@ class ProxyLens:
         self._request_id_generator = request_id_generator or generate_ulid
         self._blob_id_generator = blob_id_generator or generate_ulid
         self._flow_filter = flow_filter or (lambda flow: True)
+        self._max_concurrent_requests_per_host = (
+            resolved_max_concurrent_requests_per_host
+        )
+        self._active_flow_ids_by_host: dict[str, set[str]] = defaultdict(set)
+        self._queued_flows_by_host: dict[str, deque[http.HTTPFlow]] = defaultdict(deque)
 
     def requestheaders(self, flow: http.HTTPFlow) -> None:
         if not self._flow_filter(flow):
             flow.metadata[_STATE_KEY] = {"enabled": False}
             return
 
-        propagation = build_propagation_state(
-            existing_hop_chain=flow.request.headers.get(
-                PROXYLENS_HOP_CHAIN_HEADER
-            ),
-            node_name=self._node_name,
-            trace_id_generator=self._trace_id_generator,
-            request_id_generator=self._request_id_generator,
-        )
-        flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER] = propagation.hop_chain
-        flow.request.headers[PROXYLENS_REQUEST_ID_HEADER] = propagation.request_id
-        flow.metadata[_STATE_KEY] = {
-            "enabled": True,
-            "request_id": propagation.request_id,
-            "hop_chain": propagation.hop_chain,
-            "node_name": self._node_name,
-            "next_event_index": 0,
-            "request_streaming_enabled": False,
-            "response_streaming_enabled": False,
-            "request_pending_stream_chunk": None,
-            "response_pending_stream_chunk": None,
-            "request_stream_expected_size": None,
-            "response_stream_expected_size": None,
-            "request_stream_seen_size": 0,
-            "response_stream_seen_size": 0,
-            "request_stream_passthrough": False,
-            "response_stream_passthrough": False,
-        }
-        self._wrap_stream(flow, _REQUEST)
-        self._submit(
-            flow,
-            HttpRequestStartedEvent(
-                context=self._next_context(flow),
-                method=flow.request.method,
-                url=flow.request.url,
-                http_version=flow.request.http_version,
-                headers=_normalize_headers(flow.request.headers),
-            ),
-        )
+        counts_toward_limit = not _is_websocket_handshake(flow.request)
+
+        if counts_toward_limit and not self._acquire_flow_slot(flow):
+            flow.metadata[_STATE_KEY] = {
+                "enabled": True,
+                "queued": True,
+                "slot_acquired": False,
+                "concurrency_host": _flow_host(flow),
+            }
+            self._queued_flows_by_host[_flow_host(flow)].append(flow)
+            flow.intercept()
+            return
+
+        self._begin_flow_capture(flow, slot_acquired=counts_toward_limit)
 
     def request(self, flow: http.HTTPFlow) -> None:
         if not self._is_enabled(flow):
@@ -137,6 +133,8 @@ class ProxyLens:
         self._emit_body_events(flow, _RESPONSE)
         self._emit_trailers(flow, _RESPONSE)
         self._submit(flow, HttpResponseCompletedEvent(context=self._next_context(flow)))
+        if flow.websocket is None:
+            self._finish_flow(flow)
 
     def websocket_start(self, flow: http.HTTPFlow) -> None:
         if not self._is_enabled(flow):
@@ -189,15 +187,64 @@ class ProxyLens:
                 close_code=close_code,
             ),
         )
+        self._finish_flow(flow)
 
     def error(self, flow: http.HTTPFlow) -> None:
         if not self._is_enabled(flow) or flow.error is None:
+            self._finish_flow(flow)
             return
         self._submit(
             flow,
             RequestErrorEvent(
                 context=self._next_context(flow),
                 message=flow.error.msg,
+            ),
+        )
+        self._finish_flow(flow)
+
+    def _begin_flow_capture(
+        self,
+        flow: http.HTTPFlow,
+        *,
+        slot_acquired: bool,
+    ) -> None:
+        propagation = build_propagation_state(
+            existing_hop_chain=flow.request.headers.get(PROXYLENS_HOP_CHAIN_HEADER),
+            node_name=self._node_name,
+            trace_id_generator=self._trace_id_generator,
+            request_id_generator=self._request_id_generator,
+        )
+        flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER] = propagation.hop_chain
+        flow.request.headers[PROXYLENS_REQUEST_ID_HEADER] = propagation.request_id
+        flow.metadata[_STATE_KEY] = {
+            "enabled": True,
+            "request_id": propagation.request_id,
+            "hop_chain": propagation.hop_chain,
+            "node_name": self._node_name,
+            "next_event_index": 0,
+            "request_streaming_enabled": False,
+            "response_streaming_enabled": False,
+            "request_pending_stream_chunk": None,
+            "response_pending_stream_chunk": None,
+            "request_stream_expected_size": None,
+            "response_stream_expected_size": None,
+            "request_stream_seen_size": 0,
+            "response_stream_seen_size": 0,
+            "request_stream_passthrough": False,
+            "response_stream_passthrough": False,
+            "queued": False,
+            "slot_acquired": slot_acquired,
+            "concurrency_host": _flow_host(flow) if slot_acquired else None,
+        }
+        self._wrap_stream(flow, _REQUEST)
+        self._submit(
+            flow,
+            HttpRequestStartedEvent(
+                context=self._next_context(flow),
+                method=flow.request.method,
+                url=flow.request.url,
+                http_version=flow.request.http_version,
+                headers=_normalize_headers(flow.request.headers),
             ),
         )
 
@@ -368,13 +415,65 @@ class ProxyLens:
 
     def _is_enabled(self, flow: http.HTTPFlow) -> bool:
         state = cast(dict[str, Any] | None, flow.metadata.get(_STATE_KEY))
-        return bool(state and state.get("enabled"))
+        return bool(state and state.get("enabled") and not state.get("queued"))
 
     def _state(self, flow: http.HTTPFlow) -> dict[str, Any]:
         state = cast(dict[str, Any] | None, flow.metadata.get(_STATE_KEY))
         if state is None or not state.get("enabled"):
             raise RuntimeError("ProxyLens state was not initialized for this flow")
         return state
+
+    def _acquire_flow_slot(self, flow: http.HTTPFlow) -> bool:
+        if self._max_concurrent_requests_per_host is None:
+            return True
+        host = _flow_host(flow)
+        active_flow_ids = self._active_flow_ids_by_host[host]
+        if len(active_flow_ids) >= self._max_concurrent_requests_per_host:
+            return False
+        active_flow_ids.add(flow.id)
+        return True
+
+    def _finish_flow(self, flow: http.HTTPFlow) -> None:
+        state = cast(dict[str, Any] | None, flow.metadata.get(_STATE_KEY))
+        if state is None:
+            return
+        was_queued = bool(state.get("queued"))
+        state["queued"] = False
+        concurrency_host = cast(str | None, state.get("concurrency_host"))
+        if state.get("slot_acquired"):
+            state["slot_acquired"] = False
+            if concurrency_host is not None:
+                active_flow_ids = self._active_flow_ids_by_host.get(concurrency_host)
+                if active_flow_ids is not None:
+                    active_flow_ids.discard(flow.id)
+                    if not active_flow_ids:
+                        self._active_flow_ids_by_host.pop(concurrency_host, None)
+        elif not was_queued:
+            return
+        if concurrency_host is not None:
+            self._resume_queued_flows(concurrency_host)
+
+    def _resume_queued_flows(self, host: str) -> None:
+        queued_flows = self._queued_flows_by_host.get(host)
+        if queued_flows is None:
+            return
+
+        while queued_flows:
+            if self._max_concurrent_requests_per_host is not None:
+                active_flow_ids = self._active_flow_ids_by_host[host]
+                if len(active_flow_ids) >= self._max_concurrent_requests_per_host:
+                    return
+
+            flow = queued_flows.popleft()
+            state = cast(dict[str, Any] | None, flow.metadata.get(_STATE_KEY))
+            if state is None or not state.get("queued"):
+                continue
+
+            self._active_flow_ids_by_host[host].add(flow.id)
+            self._begin_flow_capture(flow, slot_acquired=True)
+            flow.resume()
+
+        self._queued_flows_by_host.pop(host, None)
 
 
 def _normalize_headers(headers: http.Headers) -> HeaderPairs:
@@ -395,3 +494,42 @@ def _content_length(message: http.Message) -> int | None:
         return int(content_length)
     except ValueError:
         return None
+
+
+def _is_websocket_handshake(request: http.Request) -> bool:
+    connection = request.headers.get("connection", "")
+    upgrade = request.headers.get("upgrade", "")
+    connection_tokens = {token.strip().lower() for token in connection.split(",")}
+    return "upgrade" in connection_tokens and upgrade.lower() == "websocket"
+
+
+def _flow_host(flow: http.HTTPFlow) -> str:
+    return flow.request.host.lower()
+
+
+def resolve_max_concurrent_requests_per_host(
+    *,
+    max_concurrent_requests_per_host: int | None = None,
+    env_var: str = DEFAULT_MAX_CONCURRENT_REQUESTS_PER_HOST_ENV_VAR,
+) -> int | None:
+    if max_concurrent_requests_per_host is not None:
+        resolved = max_concurrent_requests_per_host
+    else:
+        resolved = _resolve_max_concurrent_requests_per_host_from_env(env_var=env_var)
+
+    if resolved is not None and resolved < 1:
+        raise ValueError("max_concurrent_requests_per_host must be at least 1")
+    return resolved
+
+
+def _resolve_max_concurrent_requests_per_host_from_env(*, env_var: str) -> int | None:
+    configured_value = os.environ.get(env_var)
+    if configured_value is None or configured_value == "":
+        return None
+
+    try:
+        return int(configured_value)
+    except ValueError as exc:
+        raise ValueError(
+            f"max_concurrent_requests_per_host environment variable ${env_var} must be an integer"
+        ) from exc

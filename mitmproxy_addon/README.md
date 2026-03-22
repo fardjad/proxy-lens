@@ -9,6 +9,10 @@ It does three main things:
 - generates a fresh `X-ProxyLens-RequestId` per observed hop
 - submits request, response, body, trailer, websocket, and error events to a server client
 
+It can also optionally limit how many requests are allowed through the proxy at
+the same time, which is useful when you want more deterministic capture order
+from applications that cannot propagate ProxyLens headers themselves.
+
 ## Setup
 
 This subproject is self-contained under `mitmproxy_addon/`.
@@ -40,6 +44,7 @@ from proxylens_mitmproxy import ProxyLens
 
 addon = ProxyLens(
     node_name="proxy-a",
+    max_concurrent_requests_per_host=1,
 )
 
 addons = [addon]
@@ -66,6 +71,18 @@ addon = ProxyLens(
     client=ProxyLensServerClient(base_url="http://127.0.0.1:8000"),
     node_name="proxy-a",
 )
+```
+
+`max_concurrent_requests_per_host=None` keeps the default unlimited behavior.
+Set it to `1` to force strict per-host serialization, or to a larger integer to
+allow a small bounded number of in-flight requests per host.
+WebSocket upgrade requests do not count toward this limit.
+
+If you do not pass `max_concurrent_requests_per_host`, the addon reads it from
+`PROXYLENS_MAX_CONCURRENT_REQUESTS_PER_HOST` when set.
+
+```bash
+export PROXYLENS_MAX_CONCURRENT_REQUESTS_PER_HOST=1
 ```
 
 ## Running In mitmproxy
@@ -125,11 +142,16 @@ ProxyLens(
     request_id_generator=...,
     blob_id_generator=...,
     flow_filter=...,
+    max_concurrent_requests_per_host=...,
 )
 ```
 
 `flow_filter(flow)` can be used to skip capture for selected flows.
 `server_base_url` is only used when `client` is not injected.
+`max_concurrent_requests_per_host` limits how many flows can be active at once
+for each destination host; excess flows for that host are queued inside
+mitmproxy until a slot becomes available.
+WebSocket upgrade flows are excluded from that accounting.
 
 ## In-Process Test Harness
 

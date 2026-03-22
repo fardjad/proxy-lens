@@ -161,6 +161,7 @@ Its main responsibilities are:
 - inspect inbound HTTP and WebSocket traffic
 - generate or continue trace and request propagation state
 - mutate outbound headers to carry `X-ProxyLens-HopChain` and `X-ProxyLens-RequestId`
+- optionally limit how many requests are allowed through concurrently
 - emit and submit normalized capture events to a ProxyLens Server client
 - emit request-scoped incremental updates as metadata, body chunks, trailers, and lifecycle state become known
 
@@ -204,8 +205,38 @@ For testability, its dependencies should be injectable. Likely candidates:
 - request id generator
 - blob id generator
 - filtering predicate
+- concurrent request limit
 
 The current implementation also supports constructing a default real HTTP server client when one is not injected directly.
+
+#### Optional concurrency gating
+
+`ProxyLens` may optionally be configured with
+`max_concurrent_requests_per_host`.
+
+- `None` means unlimited concurrent flows
+- `1` means strict per-host serialization through the addon
+- any integer greater than `1` means bounded per-host concurrency
+- WebSocket upgrade flows do not count against this limit
+
+When the limit is reached:
+
+- additional flows for that same destination host should be intercepted and queued at `requestheaders`
+- queued flows should not mutate ProxyLens headers yet
+- queued flows should not emit `http_request_started` yet
+- the next queued flow for that host should resume only when an active flow for that host finishes
+- WebSocket upgrade flows should always bypass the queue even when the limit is reached
+
+For this feature, a flow is considered finished when:
+
+- an ordinary HTTP flow reaches `response`
+- a WebSocket flow reaches `websocket_end`
+- a flow reaches `error`
+
+This feature is intentionally heuristic. It can make sequence diagrams more
+readable in environments where upstream applications cannot propagate
+`X-ProxyLens-*` headers, but it does not create a robust causal relationship on
+its own.
 
 Avoid hard-coding file I/O or rendering inside the addon itself. In v1, `ProxyLens` is responsible only for producing normalized capture events and submitting them to the ProxyLens Server client.
 
