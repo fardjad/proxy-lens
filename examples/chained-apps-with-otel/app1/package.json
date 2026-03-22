@@ -1,0 +1,17 @@
+{
+  "name": "chained-apps-with-otel-app1",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "@opentelemetry/context-async-hooks": "latest",
+    "@opentelemetry/core": "latest",
+    "@opentelemetry/instrumentation": "latest",
+    "@opentelemetry/instrumentation-fastify": "latest",
+    "@opentelemetry/instrumentation-http": "latest",
+    "@opentelemetry/instrumentation-undici": "latest",
+    "@opentelemetry/resources": "latest",
+    "@opentelemetry/sdk-trace-node": "latest",
+    "@opentelemetry/semantic-conventions": "latest",
+    "fastify": "latest"
+  }
+}

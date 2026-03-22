@@ -27,7 +27,7 @@ def test_addon_http_client_integrates_with_real_server(
         monkeypatch.setenv("PROXYLENS_SERVER_BASE_URL", server["base_url"])
         addon = ProxyLens(
             node_name="proxy-a",
-            trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+            trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
             request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
             blob_id_generator=_blob_ids(),
         )
@@ -56,7 +56,7 @@ def test_addon_http_client_integrates_with_real_server(
         )
 
     assert request_detail["request_id"] == "01K0REQUESTPROXYAEXAMPLE00"
-    assert request_detail["trace_id"] == "01K0TRACEPROXYAEXAMPLE0000"
+    assert request_detail["trace_id"] == "4bf92f3577b34da6a3ce929d0e0e4736"
     assert request_detail["node_name"] == "proxy-a"
     assert request_detail["request_method"] == "POST"
     assert request_detail["response_status_code"] == 201

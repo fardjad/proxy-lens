@@ -59,6 +59,34 @@ def test_filter_can_exclude_flow() -> None:
     assert client.events == []
 
 
+def test_requestheaders_reuses_traceparent_trace_id_when_hop_chain_is_missing() -> None:
+    client = RecordingProxyLensServerClient()
+    addon = ProxyLens(
+        client=client,
+        node_name="proxy-a",
+        trace_id_generator=lambda: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
+    )
+    flow = tflow.tflow(
+        req=http.Request.make(
+            "GET",
+            "https://example.test/widgets",
+            headers={
+                "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+            },
+        ),
+        resp=False,
+    )
+
+    addon.requestheaders(flow)
+
+    assert (
+        flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER]
+        == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a"
+    )
+    assert client.events[0]["hop_chain"] == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a"
+
+
 def test_stream_callback_submits_request_body_incrementally() -> None:
     client = RecordingProxyLensServerClient()
     addon = ProxyLens(

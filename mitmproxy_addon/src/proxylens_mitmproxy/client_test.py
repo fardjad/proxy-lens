@@ -27,7 +27,7 @@ def test_recording_client_records_uploads_and_events() -> None:
                 event_index=1,
                 request_id="01K0REQUESTEXAMPLE0000000000",
                 node_name="proxy-a",
-                hop_chain="01K0TRACEEXAMPLE000000000000@proxy-a",
+                hop_chain="4bf92f3577b34da6a3ce929d0e0e4736@proxy-a",
             )
         )
     )
@@ -60,7 +60,7 @@ def test_http_client_uploads_blobs_and_submits_events() -> None:
                     event_index=1,
                     request_id="01K0REQUESTEXAMPLE0000000000",
                     node_name="proxy-a",
-                    hop_chain="01K0TRACEEXAMPLE000000000000@proxy-a",
+                    hop_chain="4bf92f3577b34da6a3ce929d0e0e4736@proxy-a",
                 )
             )
         )
@@ -77,7 +77,7 @@ def test_http_client_uploads_blobs_and_submits_events() -> None:
                 "request_id": "01K0REQUESTEXAMPLE0000000000",
                 "event_index": 1,
                 "node_name": "proxy-a",
-                "hop_chain": "01K0TRACEEXAMPLE000000000000@proxy-a",
+                "hop_chain": "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a",
                 "payload": {},
             }
         ]
@@ -95,7 +95,7 @@ def test_http_client_raises_on_rejected_event_result() -> None:
                         event_index=1,
                         request_id="01K0REQUESTEXAMPLE0000000000",
                         node_name="proxy-a",
-                        hop_chain="01K0TRACEEXAMPLE000000000000@proxy-a",
+                        hop_chain="4bf92f3577b34da6a3ce929d0e0e4736@proxy-a",
                     )
                 )
             )

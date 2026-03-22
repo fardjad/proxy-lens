@@ -33,8 +33,11 @@ from proxylens_mitmproxy.propagation import (
     PROXYLENS_HOP_CHAIN_HEADER,
     PROXYLENS_REQUEST_ID_HEADER,
     build_propagation_state,
+    generate_span_id,
+    generate_trace_id,
     generate_ulid,
     resolve_node_name,
+    synchronize_trace_context_headers,
 )
 
 _STATE_KEY = "proxylens_state"
@@ -57,6 +60,7 @@ class ProxyLens:
         server_base_url: str | None = None,
         server_base_url_env_var: str = DEFAULT_PROXYLENS_SERVER_BASE_URL_ENV_VAR,
         trace_id_generator: Callable[[], str] | None = None,
+        span_id_generator: Callable[[], str] | None = None,
         request_id_generator: Callable[[], str] | None = None,
         blob_id_generator: Callable[[], str] | None = None,
         flow_filter: FlowFilter | None = None,
@@ -76,7 +80,8 @@ class ProxyLens:
             base_url_env_var=server_base_url_env_var,
         )
         self._node_name = resolve_node_name(node_name, env_var=node_name_env_var)
-        self._trace_id_generator = trace_id_generator or generate_ulid
+        self._trace_id_generator = trace_id_generator or generate_trace_id
+        self._span_id_generator = span_id_generator or generate_span_id
         self._request_id_generator = request_id_generator or generate_ulid
         self._blob_id_generator = blob_id_generator or generate_ulid
         self._flow_filter = flow_filter or (lambda flow: True)
@@ -210,12 +215,20 @@ class ProxyLens:
     ) -> None:
         propagation = build_propagation_state(
             existing_hop_chain=flow.request.headers.get(PROXYLENS_HOP_CHAIN_HEADER),
+            headers=flow.request.headers,
             node_name=self._node_name,
             trace_id_generator=self._trace_id_generator,
             request_id_generator=self._request_id_generator,
         )
         flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER] = propagation.hop_chain
         flow.request.headers[PROXYLENS_REQUEST_ID_HEADER] = propagation.request_id
+        synchronize_trace_context_headers(
+            flow.request.headers,
+            trace_id=propagation.trace_id,
+            hop_nodes=propagation.hop_nodes,
+            propagator=propagation.propagator,
+            span_id_generator=self._span_id_generator,
+        )
         flow.metadata[_STATE_KEY] = {
             "enabled": True,
             "request_id": propagation.request_id,

@@ -109,9 +109,32 @@ export function displayUrl(value: string | null, fallback = 'Unknown URL') {
   }
 }
 
+export function requestDisplayUrl(
+  request: Pick<RequestSummary, 'request_url' | 'request_headers'>,
+  fallback = 'Unknown URL',
+) {
+  const authority = headerValue(request.request_headers, ':authority')
+  const host = authority ?? headerValue(request.request_headers, 'host')
+
+  if (!host) {
+    return displayUrl(request.request_url, fallback)
+  }
+
+  if (!request.request_url) {
+    return host
+  }
+
+  try {
+    const parsed = new URL(request.request_url)
+    return `${host}${parsed.pathname}${parsed.search}`
+  } catch {
+    return host
+  }
+}
+
 export function requestTitle(request: RequestSummary) {
   const method = request.request_method ?? '???'
-  const url = displayUrl(request.request_url)
+  const url = requestDisplayUrl(request)
   return `[${method} ${url}]`
 }
 

@@ -23,7 +23,7 @@ def test_repeated_calls_in_one_session_preserve_order() -> None:
     addon = ProxyLens(
         client=client,
         node_name="proxy-a",
-        trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
         request_id_generator=lambda: next(request_ids),
         blob_id_generator=_blob_ids(),
     )
@@ -57,7 +57,7 @@ def test_handler_exceptions_surface() -> None:
     addon = ProxyLens(
         client=client,
         node_name="proxy-a",
-        trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
         request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
         blob_id_generator=_blob_ids(),
     )
@@ -77,7 +77,7 @@ def test_async_entry_points_behave_like_sync() -> None:
         addon = ProxyLens(
             client=client,
             node_name="proxy-a",
-            trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+            trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
             request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
             blob_id_generator=_blob_ids(),
         )

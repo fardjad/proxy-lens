@@ -11,7 +11,7 @@ def test_end_to_end_http_flow_and_queries(tmp_path: Path) -> None:
         blob_request = "01K0BLOBREQUESTBODYCHUNK0000"
         blob_response = "01K0BLOBRESPONSEBODYCHUNK00"
         request_id = "01K0REQUESTEXAMPLE0000000000"
-        hop_chain = "01K0TRACEEXAMPLE000000000000@edge-a,proxy-a"
+        hop_chain = "4bf92f3577b34da6a3ce929d0e0e4736@edge-a,proxy-a"
 
         assert (
             client.put(f"/blobs/{blob_request}", content=b'{"name":"demo"}').status_code

@@ -19,7 +19,7 @@ def test_missing_hop_chain_generates_new_trace_and_request_id() -> None:
     addon = ProxyLens(
         client=client,
         node_name="proxy-a",
-        trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
         request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
         blob_id_generator=_blob_ids(),
     )
@@ -32,17 +32,21 @@ def test_missing_hop_chain_generates_new_trace_and_request_id() -> None:
 
     assert (
         captured.request.headers[PROXYLENS_HOP_CHAIN_HEADER]
-        == "01K0TRACEPROXYAEXAMPLE0000@proxy-a"
+        == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a"
     )
     assert (
         captured.request.headers[PROXYLENS_REQUEST_ID_HEADER]
         == "01K0REQUESTPROXYAEXAMPLE00"
     )
     assert client.events[0]["type"] == "http_request_started"
-    assert client.events[0]["payload"]["headers"][-2:] == [
-        (PROXYLENS_HOP_CHAIN_HEADER, "01K0TRACEPROXYAEXAMPLE0000@proxy-a"),
-        (PROXYLENS_REQUEST_ID_HEADER, "01K0REQUESTPROXYAEXAMPLE00"),
-    ]
+    assert (
+        (PROXYLENS_HOP_CHAIN_HEADER, "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a")
+        in client.events[0]["payload"]["headers"]
+    )
+    assert (
+        (PROXYLENS_REQUEST_ID_HEADER, "01K0REQUESTPROXYAEXAMPLE00")
+        in client.events[0]["payload"]["headers"]
+    )
 
 
 def test_existing_hop_chain_is_preserved_and_appended_and_upstream_request_id_is_replaced() -> (
@@ -65,20 +69,20 @@ def test_existing_hop_chain_is_preserved_and_appended_and_upstream_request_id_is
             "DELETE",
             "https://example.test/widgets/1",
             headers={
-                PROXYLENS_HOP_CHAIN_HEADER: "01K0TRACEPROXYAEXAMPLE0000@proxy-a",
+                PROXYLENS_HOP_CHAIN_HEADER: "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a",
                 PROXYLENS_REQUEST_ID_HEADER: "01K0REQUESTUPSTREAMEXAMPLE0",
             },
         )
 
     assert (
         captured.request.headers[PROXYLENS_HOP_CHAIN_HEADER]
-        == "01K0TRACEPROXYAEXAMPLE0000@proxy-a,proxy-b"
+        == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a,proxy-b"
     )
     assert (
         captured.request.headers[PROXYLENS_REQUEST_ID_HEADER]
         == "01K0REQUESTPROXYBEXAMPLE00"
     )
-    assert client.events[0]["hop_chain"] == "01K0TRACEPROXYAEXAMPLE0000@proxy-a,proxy-b"
+    assert client.events[0]["hop_chain"] == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a,proxy-b"
 
 
 def test_request_and_response_bodies_upload_before_body_events_and_capture_versions_and_trailers() -> (
@@ -89,7 +93,7 @@ def test_request_and_response_bodies_upload_before_body_events_and_capture_versi
     addon = ProxyLens(
         client=client,
         node_name="proxy-a",
-        trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
         request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
         blob_id_generator=blob_ids,
     )
@@ -152,7 +156,7 @@ def test_streaming_request_and_response_capture_metadata_before_body_events() ->
     addon = ProxyLens(
         client=client,
         node_name="proxy-a",
-        trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
         request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
         blob_id_generator=_blob_ids(),
     )
@@ -205,7 +209,7 @@ def test_websocket_connections_and_messages_are_captured() -> None:
     addon = ProxyLens(
         client=client,
         node_name="proxy-a",
-        trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
         request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
         blob_id_generator=_blob_ids(),
     )
@@ -246,7 +250,7 @@ def test_node_name_can_be_resolved_from_environment(monkeypatch) -> None:
     client = RecordingProxyLensServerClient()
     addon = ProxyLens(
         client=client,
-        trace_id_generator=lambda: "01K0TRACEPROXYENVEXAMPLE000",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4739",
         request_id_generator=lambda: "01K0REQUESTPROXYENVEXAMPLE0",
         blob_id_generator=_blob_ids(),
     )
@@ -265,7 +269,7 @@ def test_error_event_is_submitted_for_failed_flow() -> None:
     addon = ProxyLens(
         client=client,
         node_name="proxy-a",
-        trace_id_generator=lambda: "01K0TRACEPROXYAEXAMPLE0000",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
         request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
         blob_id_generator=_blob_ids(),
     )

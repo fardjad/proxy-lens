@@ -111,7 +111,7 @@ uv run mitmdump -s run_proxylens_mitmproxy.py
 For each request seen by the current mitmproxy process, the addon:
 
 1. reads any inbound `X-ProxyLens-HopChain`
-2. appends the current node name or starts a new trace
+2. appends the current node name or starts a new trace using a trace id extracted from `traceparent`, B3, or Jaeger headers when available
 3. replaces any inbound `X-ProxyLens-RequestId` with a fresh ULID
 4. emits normalized capture events in request-local `event_index` order
 5. uploads binary body chunks and binary websocket payloads before emitting referencing events

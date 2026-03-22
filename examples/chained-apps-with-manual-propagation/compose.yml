@@ -1,0 +1,27 @@
+services:
+  proxylens-server:
+    build:
+      context: ../..
+      dockerfile: examples/chained-apps-with-manual-propagation/server.Dockerfile
+    command:
+      - proxylens-server
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --data-dir
+      - /data
+      - --no-access-log
+    environment:
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.data/server:/data
+    networks:
+      - chained-apps-with-manual-propagation
+
+networks:
+  chained-apps-with-manual-propagation:
+    name: proxylens-chained-apps-with-manual-propagation
+    external: true

@@ -1,0 +1,56 @@
+services:
+  caddy-app2:
+    image: caddy:2
+    depends_on:
+      - app2
+      - proxylens-addon-app2
+    environment:
+      HTTP_PROXY: http://proxylens-addon-app2:8080
+      HTTPS_PROXY: http://proxylens-addon-app2:8080
+      OTEL_TRACES_EXPORTER: none
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../.data/tls:/certs:ro
+    networks:
+      - chained-apps-with-otel
+
+  proxylens-addon-app2:
+    build:
+      context: ../../..
+      dockerfile: examples/chained-apps-with-otel/proxy/Dockerfile
+    environment:
+      PROXYLENS_NODE_NAME: app2
+      PROXYLENS_SERVER_BASE_URL: http://proxylens-server:8000
+      PROXYLENS_MAX_CONCURRENT_REQUESTS_PER_HOST: "1"
+    expose:
+      - "8080"
+    volumes:
+      - ../.data/mitmproxy/app2:/root/.mitmproxy
+    networks:
+      - chained-apps-with-otel
+
+  app2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      APP_NAME: app2
+      DOWNSTREAM_URL: https://caddy-app3:8443/
+      DOWNSTREAM_NAME: app3
+      HTTP_PROXY: http://proxylens-addon-app2:8080
+      HTTPS_PROXY: http://proxylens-addon-app2:8080
+      ASPNETCORE_URLS: https://0.0.0.0:9443
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /certs/localhost.crt
+      ASPNETCORE_Kestrel__Certificates__Default__KeyPath: /certs/localhost.key
+    init: true
+    tty: true
+    volumes:
+      - ../.data/tls:/certs:ro
+      - ../.data/mitmproxy/app2:/mitmproxy:ro
+    networks:
+      - chained-apps-with-otel
+
+networks:
+  chained-apps-with-otel:
+    name: proxylens-chained-apps-with-otel
+    external: true
