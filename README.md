@@ -1,5 +1,7 @@
 # ProxyLens
 
+> Proxy based traffic capture and visualization tool for development
+
 ProxyLens is a traffic-capture toolkit for following requests across multiple
 hops.
 
