@@ -84,7 +84,8 @@ describe('DetailsSidebar', () => {
     )
 
     expect(screen.getByText(/example\.test\/widgets/i)).toBeInTheDocument()
-    expect(screen.getByText(/trace trace-1/i)).toBeInTheDocument()
+    expect(screen.getByText(/trace id/i)).toBeInTheDocument()
+    expect(screen.getByText('trace-1')).toBeInTheDocument()
     expect(screen.getAllByText(/no stored body/i)).toHaveLength(2)
   })
 })

@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { RequestSummary } from './types'
-import { intersectSelection, invertSelection, makeBrushRange, requestTitle } from './utils'
+import {
+  compareRequestsChronologically,
+  filterRequestsByTimeShortcutAnchor,
+  formatRequestState,
+  getRequestState,
+  intersectSelection,
+  invertSelection,
+  makeBrushRange,
+  requestTitle,
+} from './utils'
 
 const baseRequest: RequestSummary = {
   request_id: 'req-1',
@@ -33,6 +42,40 @@ describe('selection helpers', () => {
   it('inverts only within the filtered request set', () => {
     expect(invertSelection(['a', 'c'], ['a', 'b', 'c', 'd'])).toEqual(['b', 'd'])
   })
+
+  it('keeps the exact clicked item as the frontend anchor when timestamps tie', () => {
+    const requests = [
+      {
+        ...baseRequest,
+        request_id: 'req-1',
+        captured_at: '2026-03-22T10:00:00.123Z',
+      },
+      {
+        ...baseRequest,
+        request_id: 'req-2',
+        captured_at: '2026-03-22T10:00:00.123Z',
+      },
+      {
+        ...baseRequest,
+        request_id: 'req-3',
+        captured_at: '2026-03-22T10:00:00.124Z',
+      },
+    ].sort(compareRequestsChronologically)
+
+    expect(
+      filterRequestsByTimeShortcutAnchor(requests, {
+        boundary: 'hide-before',
+        requestId: 'req-2',
+      }).map((request) => request.request_id),
+    ).toEqual(['req-2', 'req-3'])
+
+    expect(
+      filterRequestsByTimeShortcutAnchor(requests, {
+        boundary: 'hide-after',
+        requestId: 'req-2',
+      }).map((request) => request.request_id),
+    ).toEqual(['req-1', 'req-2'])
+  })
 })
 
 describe('makeBrushRange', () => {
@@ -62,5 +105,29 @@ describe('requestTitle', () => {
         request_headers: [],
       }),
     ).toBe('[GET app1/widgets?x=1]')
+  })
+})
+
+describe('request state helpers', () => {
+  it('prefers error over transport lifecycle flags', () => {
+    expect(
+      getRequestState({
+        ...baseRequest,
+        error: 'upstream failed',
+        websocket_open: true,
+      }),
+    ).toBe('error')
+  })
+
+  it('formats a response-open request state for grid display', () => {
+    expect(
+      formatRequestState(
+        getRequestState({
+          ...baseRequest,
+          response_complete: false,
+          complete: false,
+        }),
+      ),
+    ).toBe('Response open')
   })
 })

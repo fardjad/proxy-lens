@@ -16,10 +16,8 @@ export function RequestToolbar({
   return (
     <div class="toolbar">
       <div class="toolbar__title">
-        <strong>Requests</strong>
-        <span>
-          {selectedCount} selected · {totalCount} visible
-        </span>
+        <span>{selectedCount} selected</span>
+        <span>{totalCount} visible</span>
       </div>
       <div class="toolbar__actions">
         <button type="button" class="button button--ghost" onClick={onSelectAll}>

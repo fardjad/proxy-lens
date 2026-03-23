@@ -34,11 +34,22 @@ export function classNames(...values: Array<string | false | null | undefined>) 
   return values.filter(Boolean).join(' ')
 }
 
+export function compareRequestsChronologically(
+  left: Pick<RequestSummary, 'captured_at' | 'request_id'>,
+  right: Pick<RequestSummary, 'captured_at' | 'request_id'>,
+) {
+  const timestampDelta =
+    new Date(left.captured_at).getTime() - new Date(right.captured_at).getTime()
+
+  if (timestampDelta !== 0) {
+    return timestampDelta
+  }
+
+  return left.request_id.localeCompare(right.request_id)
+}
+
 export function sortRequestsChronologically(requests: RequestSummary[]) {
-  return [...requests].sort(
-    (left, right) =>
-      new Date(left.captured_at).getTime() - new Date(right.captured_at).getTime(),
-  )
+  return [...requests].sort(compareRequestsChronologically)
 }
 
 export function headerValue(headers: HeaderPair[], name: string) {
@@ -138,6 +149,48 @@ export function requestTitle(request: RequestSummary) {
   return `[${method} ${url}]`
 }
 
+export type RequestState =
+  | 'complete'
+  | 'request-open'
+  | 'response-open'
+  | 'websocket-open'
+  | 'error'
+
+export function getRequestState(request: RequestSummary): RequestState {
+  if (request.error) {
+    return 'error'
+  }
+
+  if (request.websocket_open) {
+    return 'websocket-open'
+  }
+
+  if (!request.request_complete) {
+    return 'request-open'
+  }
+
+  if (!request.response_complete) {
+    return 'response-open'
+  }
+
+  return 'complete'
+}
+
+export function formatRequestState(state: RequestState) {
+  switch (state) {
+    case 'complete':
+      return 'Complete'
+    case 'request-open':
+      return 'Request open'
+    case 'response-open':
+      return 'Response open'
+    case 'websocket-open':
+      return 'WebSocket open'
+    case 'error':
+      return 'Error'
+  }
+}
+
 export function toggleSelection(selectedIds: string[], requestId: string) {
   return selectedIds.includes(requestId)
     ? selectedIds.filter((id) => id !== requestId)
@@ -152,6 +205,32 @@ export function intersectSelection(selectedIds: string[], visibleIds: string[]) 
 export function invertSelection(selectedIds: string[], visibleIds: string[]) {
   const selected = new Set(selectedIds)
   return visibleIds.filter((id) => !selected.has(id))
+}
+
+export interface TimeShortcutAnchor {
+  boundary: 'hide-before' | 'hide-after'
+  requestId: string
+}
+
+export function filterRequestsByTimeShortcutAnchor(
+  requests: RequestSummary[],
+  anchor: TimeShortcutAnchor | null,
+) {
+  if (!anchor) {
+    return requests
+  }
+
+  const anchorIndex = requests.findIndex(
+    (request) => request.request_id === anchor.requestId,
+  )
+
+  if (anchorIndex < 0) {
+    return requests
+  }
+
+  return anchor.boundary === 'hide-before'
+    ? requests.slice(anchorIndex)
+    : requests.slice(0, anchorIndex + 1)
 }
 
 export function bucketDurationMs(bucket: HistogramBucket) {

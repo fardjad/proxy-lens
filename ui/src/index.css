@@ -1,31 +1,26 @@
 :root {
   font-family:
-    "Instrument Sans", "Avenir Next", "Segoe UI", sans-serif;
+    "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
   line-height: 1.4;
-  font-weight: 450;
-  color: #1c221a;
-  background:
-    radial-gradient(circle at top left, rgba(198, 219, 181, 0.45), transparent 36%),
-    radial-gradient(circle at top right, rgba(255, 209, 161, 0.32), transparent 42%),
-    linear-gradient(180deg, #f8f4ea 0%, #efe6d5 100%);
+  font-weight: 400;
+  color: #151b23;
+  background: #f3f5f7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color-scheme: light;
-  --page-max: 1580px;
-  --ink: #1f241d;
-  --ink-soft: #556050;
-  --paper: rgba(255, 252, 244, 0.85);
-  --line: rgba(38, 44, 33, 0.18);
-  --line-strong: rgba(38, 44, 33, 0.34);
-  --accent: #356f55;
-  --accent-strong: #214636;
-  --alert: #b85d2b;
-  --selection: #d8efd7;
-  --shadow: 0 18px 50px rgba(58, 47, 22, 0.12);
-  --radius-xl: 32px;
-  --radius-lg: 24px;
+  --background: #f3f5f7;
+  --ink: #151b23;
+  --ink-soft: #667281;
+  --panel: #ffffff;
+  --surface: #ffffff;
+  --surface-muted: #f7f9fb;
+  --line: #d7dee7;
+  --line-strong: #9ba8b6;
+  --accent: #205493;
+  --alert: #ad4f22;
+  --selection: #e8f0fb;
 }
 
 * {
@@ -41,6 +36,7 @@ body,
 body {
   margin: 0;
   min-width: 320px;
+  background: var(--background, #f3f5f7);
 }
 
 body,
