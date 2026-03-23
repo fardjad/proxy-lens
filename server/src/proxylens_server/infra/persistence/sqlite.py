@@ -81,8 +81,7 @@ class SqliteDatabase:
         )
 
     def _initialize_schema(self) -> None:
-        self.executescript(
-            """
+        self.executescript("""
             CREATE TABLE IF NOT EXISTS blobs (
                 blob_id TEXT PRIMARY KEY,
                 size_bytes INTEGER NOT NULL,
@@ -161,8 +160,7 @@ class SqliteDatabase:
                 deleted_at TEXT NOT NULL,
                 expires_at TEXT NOT NULL
             );
-            """
-        )
+            """)
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.db_path)

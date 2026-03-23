@@ -41,7 +41,9 @@ class GetResponseBodyUseCase:
             data.request_id, "http_response_body"
         )
         if not blob_ids:
-            raise ServerNotFoundError(f"response body for {data.request_id} was not found")
+            raise ServerNotFoundError(
+                f"response body for {data.request_id} was not found"
+            )
         body = b"".join(
             self._blob_repository.read_bytes(blob_id) for blob_id in blob_ids
         )

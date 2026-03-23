@@ -138,7 +138,5 @@ def resolve_server_base_url(
     base_url: str | None = None,
     env_var: str = DEFAULT_PROXYLENS_SERVER_BASE_URL_ENV_VAR,
 ) -> str:
-    resolved = (
-        base_url or os.environ.get(env_var) or DEFAULT_PROXYLENS_SERVER_BASE_URL
-    )
+    resolved = base_url or os.environ.get(env_var) or DEFAULT_PROXYLENS_SERVER_BASE_URL
     return resolved.rstrip("/")

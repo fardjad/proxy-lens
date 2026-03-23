@@ -176,12 +176,10 @@ def test_rejects_events_for_tombstoned_requests(tmp_path: Path) -> None:
 
 def test_filter_can_drop_event(tmp_path: Path) -> None:
     script = tmp_path / "filter.py"
-    script.write_text(
-        """
+    script.write_text("""
 def filter_event(app_container, event, request):
     return None
-        """.strip()
-    )
+        """.strip())
     with closing(
         create_container(ServerConfig(data_dir=tmp_path / "data", filter_script=script))
     ) as container:

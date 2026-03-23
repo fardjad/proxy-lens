@@ -40,13 +40,12 @@ def test_missing_hop_chain_generates_new_trace_and_request_id() -> None:
     )
     assert client.events[0]["type"] == "http_request_started"
     assert (
-        (PROXYLENS_HOP_CHAIN_HEADER, "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a")
-        in client.events[0]["payload"]["headers"]
-    )
-    assert (
-        (PROXYLENS_REQUEST_ID_HEADER, "01K0REQUESTPROXYAEXAMPLE00")
-        in client.events[0]["payload"]["headers"]
-    )
+        PROXYLENS_HOP_CHAIN_HEADER,
+        "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a",
+    ) in client.events[0]["payload"]["headers"]
+    assert (PROXYLENS_REQUEST_ID_HEADER, "01K0REQUESTPROXYAEXAMPLE00") in client.events[
+        0
+    ]["payload"]["headers"]
 
 
 def test_existing_hop_chain_is_preserved_and_appended_and_upstream_request_id_is_replaced() -> (
@@ -82,7 +81,10 @@ def test_existing_hop_chain_is_preserved_and_appended_and_upstream_request_id_is
         captured.request.headers[PROXYLENS_REQUEST_ID_HEADER]
         == "01K0REQUESTPROXYBEXAMPLE00"
     )
-    assert client.events[0]["hop_chain"] == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a,proxy-b"
+    assert (
+        client.events[0]["hop_chain"]
+        == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a,proxy-b"
+    )
 
 
 def test_request_and_response_bodies_upload_before_body_events_and_capture_versions_and_trailers() -> (

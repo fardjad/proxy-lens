@@ -44,7 +44,9 @@ def test_build_proxylens_trace_header_for_new_trace() -> None:
 def test_existing_trace_header_is_appended() -> None:
     state = build_propagation_state(
         existing_hop_chain="4bf92f3577b34da6a3ce929d0e0e4736@proxy-a",
-        headers={"traceparent": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01"},
+        headers={
+            "traceparent": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01"
+        },
         node_name="proxy-b",
         trace_id_generator=lambda: "unused",
         request_id_generator=lambda: "01K0REQUESTPROXYBEXAMPLE00",
@@ -96,13 +98,19 @@ def test_extract_trace_id_supports_b3_single_multi_and_jaeger() -> None:
     assert extract_trace_id({"x-b3-traceid": "4BF92F3577B34DA6A3CE929D0E0E4736"}) == (
         "4bf92f3577b34da6a3ce929d0e0e4736"
     )
-    assert extract_trace_id(
-        {"uber-trace-id": "4BF92F3577B34DA6A3CE929D0E0E4736:00f067aa0ba902b7:0:1"}
-    ) == "4bf92f3577b34da6a3ce929d0e0e4736"
+    assert (
+        extract_trace_id(
+            {"uber-trace-id": "4BF92F3577B34DA6A3CE929D0E0E4736:00f067aa0ba902b7:0:1"}
+        )
+        == "4bf92f3577b34da6a3ce929d0e0e4736"
+    )
 
 
 def test_extract_trace_id_ignores_invalid_values() -> None:
-    assert extract_trace_id({"traceparent": "00-00000000000000000000000000000000-0-01"}) is None
+    assert (
+        extract_trace_id({"traceparent": "00-00000000000000000000000000000000-0-01"})
+        is None
+    )
     assert extract_trace_id({"b3": "1"}) is None
     assert extract_trace_id({"x-b3-traceid": "not-hex"}) is None
     assert extract_trace_id({"uber-trace-id": "bad"}) is None
@@ -133,12 +141,16 @@ def test_extract_hop_nodes_supports_all_state_headers() -> None:
 
 
 def test_extract_hop_nodes_requires_detected_propagator() -> None:
-    assert extract_hop_nodes({TRACESTATE_HEADER: "proxylens=ZWRnZS1hLHByb3h5LWE"}) is None
+    assert (
+        extract_hop_nodes({TRACESTATE_HEADER: "proxylens=ZWRnZS1hLHByb3h5LWE"}) is None
+    )
     assert extract_hop_nodes({B3_HOP_NODES_HEADER: "ZWRnZS1hLHByb3h5LWE"}) is None
     assert extract_hop_nodes({JAEGER_HOP_NODES_HEADER: "ZWRnZS1hLHByb3h5LWE"}) is None
 
 
-def test_synchronize_trace_context_headers_only_updates_w3c_headers_for_w3c_requests() -> None:
+def test_synchronize_trace_context_headers_only_updates_w3c_headers_for_w3c_requests() -> (
+    None
+):
     headers: dict[str, str] = {
         TRACEPARENT_HEADER: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
         TRACESTATE_HEADER: "vendor=keep",
@@ -152,14 +164,19 @@ def test_synchronize_trace_context_headers_only_updates_w3c_headers_for_w3c_requ
         span_id_generator=lambda: "aaaaaaaaaaaaaaaa",
     )
 
-    assert headers[TRACEPARENT_HEADER] == "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+    assert (
+        headers[TRACEPARENT_HEADER]
+        == "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+    )
     assert headers[TRACESTATE_HEADER] == "proxylens=ZWRnZS1hLHByb3h5LWE,vendor=keep"
     assert B3_HEADER not in headers
     assert B3_TRACE_ID_HEADER not in headers
     assert JAEGER_TRACE_CONTEXT_HEADER not in headers
 
 
-def test_synchronize_trace_context_headers_only_updates_b3_headers_for_b3_requests() -> None:
+def test_synchronize_trace_context_headers_only_updates_b3_headers_for_b3_requests() -> (
+    None
+):
     headers: dict[str, str] = {
         B3_HEADER: "a3ce929d0e0e4736-00f067aa0ba902b7-1",
         B3_HOP_NODES_HEADER: "ZWRnZS1h",
@@ -182,7 +199,9 @@ def test_synchronize_trace_context_headers_only_updates_b3_headers_for_b3_reques
     assert JAEGER_TRACE_CONTEXT_HEADER not in headers
 
 
-def test_synchronize_trace_context_headers_only_updates_jaeger_headers_for_jaeger_requests() -> None:
+def test_synchronize_trace_context_headers_only_updates_jaeger_headers_for_jaeger_requests() -> (
+    None
+):
     headers: dict[str, str] = {
         JAEGER_TRACE_CONTEXT_HEADER: "4bf92f3577b34da6a3ce929d0e0e4736:00f067aa0ba902b7:0:1",
         JAEGER_HOP_NODES_HEADER: "ZWRnZS1h",
@@ -196,13 +215,18 @@ def test_synchronize_trace_context_headers_only_updates_jaeger_headers_for_jaege
         span_id_generator=lambda: "aaaaaaaaaaaaaaaa",
     )
 
-    assert headers[JAEGER_TRACE_CONTEXT_HEADER] == "4bf92f3577b34da6a3ce929d0e0e4736:00f067aa0ba902b7:0:1"
+    assert (
+        headers[JAEGER_TRACE_CONTEXT_HEADER]
+        == "4bf92f3577b34da6a3ce929d0e0e4736:00f067aa0ba902b7:0:1"
+    )
     assert headers[JAEGER_HOP_NODES_HEADER] == "ZWRnZS1hLHByb3h5LWE"
     assert TRACEPARENT_HEADER not in headers
     assert B3_HEADER not in headers
 
 
-def test_synchronize_trace_context_headers_is_noop_without_detected_propagator() -> None:
+def test_synchronize_trace_context_headers_is_noop_without_detected_propagator() -> (
+    None
+):
     headers: dict[str, str] = {}
 
     synchronize_trace_context_headers(

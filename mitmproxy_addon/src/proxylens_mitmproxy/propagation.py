@@ -145,9 +145,15 @@ def build_propagation_state(
         nodes = (*hop_nodes, node_name)
     else:
         trace_context = extract_trace_context(headers)
-        trace_id = trace_context.trace_id if trace_context is not None else trace_id_generator()
+        trace_id = (
+            trace_context.trace_id
+            if trace_context is not None
+            else trace_id_generator()
+        )
         propagated_hop_nodes = extract_hop_nodes(headers, propagator=propagator)
-        nodes = (*propagated_hop_nodes, node_name) if propagated_hop_nodes else (node_name,)
+        nodes = (
+            (*propagated_hop_nodes, node_name) if propagated_hop_nodes else (node_name,)
+        )
     return PropagationState(
         trace_id=trace_id,
         hop_nodes=tuple(nodes),
@@ -168,10 +174,16 @@ def synchronize_trace_context_headers(
     if propagator is None:
         return
     existing_context = extract_trace_context(headers)
-    span_id = existing_context.span_id if existing_context and existing_context.span_id else span_id_generator()
+    span_id = (
+        existing_context.span_id
+        if existing_context and existing_context.span_id
+        else span_id_generator()
+    )
     trace_flags = existing_context.trace_flags if existing_context is not None else "01"
     encoded_hop_nodes = _encode_hop_nodes(hop_nodes)
-    resolved_propagator = propagator if propagator != "w3c" or len(trace_id) == 32 else "b3"
+    resolved_propagator = (
+        propagator if propagator != "w3c" or len(trace_id) == 32 else "b3"
+    )
     if resolved_propagator == "w3c" and len(trace_id) == 32:
         headers[TRACEPARENT_HEADER] = f"00-{trace_id}-{span_id}-{trace_flags}"
         headers[TRACESTATE_HEADER] = _upsert_tracestate(
@@ -184,7 +196,9 @@ def synchronize_trace_context_headers(
         return
 
     if resolved_propagator == "jaeger":
-        headers[JAEGER_TRACE_CONTEXT_HEADER] = f"{trace_id}:{span_id}:0:{_jaeger_flags_value(trace_flags)}"
+        headers[JAEGER_TRACE_CONTEXT_HEADER] = (
+            f"{trace_id}:{span_id}:0:{_jaeger_flags_value(trace_flags)}"
+        )
         headers[JAEGER_HOP_NODES_HEADER] = encoded_hop_nodes
         _delete_header(headers, TRACEPARENT_HEADER)
         _delete_header(headers, TRACESTATE_HEADER)
@@ -229,7 +243,9 @@ def _extract_b3_single_trace_context(value: str | None) -> TraceContext | None:
         return None
     span_id = _normalize_span_id(parts[1] if len(parts) >= 2 else None)
     trace_flags = _trace_flags_from_b3(parts[2] if len(parts) >= 3 else None)
-    return TraceContext(kind="b3", trace_id=trace_id, span_id=span_id, trace_flags=trace_flags)
+    return TraceContext(
+        kind="b3", trace_id=trace_id, span_id=span_id, trace_flags=trace_flags
+    )
 
 
 def _extract_b3_multi_trace_context(headers: Mapping[str, str]) -> TraceContext | None:
@@ -240,7 +256,9 @@ def _extract_b3_multi_trace_context(headers: Mapping[str, str]) -> TraceContext 
     trace_flags = _trace_flags_from_b3(
         headers.get(B3_SAMPLED_HEADER) or headers.get(B3_FLAGS_HEADER)
     )
-    return TraceContext(kind="b3", trace_id=trace_id, span_id=span_id, trace_flags=trace_flags)
+    return TraceContext(
+        kind="b3", trace_id=trace_id, span_id=span_id, trace_flags=trace_flags
+    )
 
 
 def _extract_jaeger_trace_context(value: str | None) -> TraceContext | None:
@@ -272,7 +290,9 @@ def _extract_hop_nodes_from_tracestate(value: str | None) -> tuple[str, ...] | N
 
 
 def _encode_hop_nodes(hop_nodes: tuple[str, ...]) -> str:
-    encoded = base64.urlsafe_b64encode(",".join(hop_nodes).encode("utf-8")).decode("ascii")
+    encoded = base64.urlsafe_b64encode(",".join(hop_nodes).encode("utf-8")).decode(
+        "ascii"
+    )
     return encoded.rstrip("=")
 
 

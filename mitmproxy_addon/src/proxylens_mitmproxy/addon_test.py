@@ -163,7 +163,9 @@ def test_invalid_max_concurrent_requests_per_host_env_var_raises(
         ProxyLens(node_name="proxy-a")
 
 
-def test_limit_one_queues_second_flow_for_same_host_until_first_flow_completes() -> None:
+def test_limit_one_queues_second_flow_for_same_host_until_first_flow_completes() -> (
+    None
+):
     client = RecordingProxyLensServerClient()
     trace_ids = iter(
         [

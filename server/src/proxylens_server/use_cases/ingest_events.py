@@ -336,7 +336,9 @@ class IngestEventsUseCase:
 
     def _ingest_event(self, event: CaptureEvent) -> EventIngestResult:
         if self._tombstones.has_active(event.request_id):
-            raise ServerConflictError(f"request {event.request_id} was explicitly deleted")
+            raise ServerConflictError(
+                f"request {event.request_id} was explicitly deleted"
+            )
 
         blob_id = event_blob_id(event)
         if blob_id is not None and not self._blobs.exists(blob_id):
@@ -591,4 +593,6 @@ class IngestEventsUseCase:
             record[key] = value
             return
         if current != value:
-            raise ServerConflictError(f"{key} conflicts with the existing request state")
+            raise ServerConflictError(
+                f"{key} conflicts with the existing request state"
+            )

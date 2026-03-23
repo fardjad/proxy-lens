@@ -39,12 +39,10 @@ def test_repeated_calls_in_one_session_preserve_order() -> None:
         event for event in client.events if event["type"] == "http_request_started"
     ]
     assert (
-        first.request.headers["X-ProxyLens-RequestId"]
-        == "01K0REQUESTFIRSTEXAMPLE0000"
+        first.request.headers["X-ProxyLens-RequestId"] == "01K0REQUESTFIRSTEXAMPLE0000"
     )
     assert (
-        second.request.headers["X-ProxyLens-RequestId"]
-        == "01K0REQUESTSECONDEXAMPLE000"
+        second.request.headers["X-ProxyLens-RequestId"] == "01K0REQUESTSECONDEXAMPLE000"
     )
     assert [event["request_id"] for event in request_started_events] == [
         "01K0REQUESTFIRSTEXAMPLE0000",

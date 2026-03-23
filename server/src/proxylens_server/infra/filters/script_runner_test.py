@@ -8,13 +8,11 @@ from proxylens_server.use_cases.ingest_events import capture_event_adapter
 
 def test_filter_runner_loads_and_applies_filter(tmp_path: Path) -> None:
     script = tmp_path / "filter.py"
-    script.write_text(
-        """
+    script.write_text("""
 def filter_event(app_container, event, request):
     payload = event.payload.model_copy(update={"method": "PATCH"})
     return event.model_copy(update={"payload": payload})
-        """.strip()
-    )
+        """.strip())
     runner = FilterRunner(script)
     runner.load()
     event = capture_event_adapter.validate_python(

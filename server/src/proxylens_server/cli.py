@@ -20,9 +20,7 @@ FILTER_SCRIPT_ENV_VAR = "PROXYLENS_SERVER_CLI_FILTER_SCRIPT"
 def _parse_bind(value: str) -> tuple[str, int]:
     host, separator, port_text = value.rpartition(":")
     if not separator or not host or not port_text:
-        raise argparse.ArgumentTypeError(
-            "bind address must be in the form host:port"
-        )
+        raise argparse.ArgumentTypeError("bind address must be in the form host:port")
 
     try:
         port = int(port_text)
