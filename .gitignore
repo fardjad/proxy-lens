@@ -2,4 +2,4 @@
 .pytest_cache/
 __pycache__/
 dist/
-examples/chained-apps-no-propagation/.data/
+examples/*/.data/
