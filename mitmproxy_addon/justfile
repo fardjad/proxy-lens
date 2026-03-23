@@ -16,6 +16,11 @@ publish repository='pypi': build
 test:
     env -u VIRTUAL_ENV uv run pytest
 
+# Upgrade locked dependencies within the declared version constraints.
+upgrade:
+    env -u VIRTUAL_ENV uv lock --upgrade
+    env -u VIRTUAL_ENV uv sync --dev
+
 # Re-run the mitmproxy addon test suite on file changes.
 test-watch:
     env -u VIRTUAL_ENV uv run ptw .
