@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { buildSequenceDiagramModel, ORIGIN_COLUMN } from './diagram'
 import type { RequestSummary } from './types'
 

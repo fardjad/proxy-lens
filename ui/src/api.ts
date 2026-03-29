@@ -7,9 +7,19 @@ import type {
 } from './types'
 
 const DEFAULT_SERVER_TARGET = 'http://127.0.0.1:8000'
-const SERVER_TARGET =
-  import.meta.env.VITE_PROXYLENS_BASE_URL?.trim() || DEFAULT_SERVER_TARGET
-const API_BASE_URL = import.meta.env.DEV ? '/__proxylens' : SERVER_TARGET
+
+declare global {
+  interface Window {
+    __PROXYLENS_CONFIG__?: {
+      apiBaseUrl?: string
+    }
+  }
+}
+
+const API_BASE_URL =
+  typeof window !== 'undefined'
+    ? window.__PROXYLENS_CONFIG__?.apiBaseUrl?.trim() || DEFAULT_SERVER_TARGET
+    : DEFAULT_SERVER_TARGET
 
 export function serializeRequestQuery(filters: RequestFilters) {
   const params = new URLSearchParams()
@@ -133,5 +143,5 @@ export async function getResponseBody(requestId: string) {
 }
 
 export function getServerTarget() {
-  return SERVER_TARGET
+  return API_BASE_URL
 }

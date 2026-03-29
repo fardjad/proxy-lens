@@ -285,6 +285,9 @@ export function App() {
   const [diagramHeight, setDiagramHeight] = useState(() =>
     readStoredSize('proxylens.diagramHeight', DEFAULT_DIAGRAM_HEIGHT),
   )
+  const [diagramHidden, setDiagramHidden] = useState(
+    () => readStoredSize('proxylens.diagramHidden', 1) === 1,
+  )
   const [requestsState, setRequestsState] = useState<
     LoadState<RequestSummary[]>
   >({
@@ -367,6 +370,13 @@ export function App() {
       `${Math.round(diagramHeight)}`,
     )
   }, [diagramHeight])
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      'proxylens.diagramHidden',
+      diagramHidden ? '1' : '0',
+    )
+  }, [diagramHidden])
 
   useEffect(() => {
     const handleResize = () => {
@@ -787,10 +797,7 @@ export function App() {
   }
 
   function startDiagramResize(event: JSX.TargetedPointerEvent<HTMLDivElement>) {
-    if (
-      window.matchMedia('(max-width: 1180px)').matches ||
-      !mainBodyRef.current
-    ) {
+    if (!mainBodyRef.current) {
       return
     }
 
@@ -841,7 +848,6 @@ export function App() {
       <header class="shell__header">
         <div class="shell__title">
           <strong>ProxyLens</strong>
-          <span>Flow sequencer</span>
         </div>
         <button
           type="button"
@@ -961,7 +967,9 @@ export function App() {
           </section>
 
           <div
-            class="workspace__main-body"
+            class={`workspace__main-body${
+              diagramHidden ? ' workspace__main-body--diagram-hidden' : ''
+            }`}
             ref={mainBodyRef}
             style={mainBodyStyle}
           >
@@ -999,41 +1007,39 @@ export function App() {
               )}
             </section>
 
-            <hr
-              class="splitter splitter--horizontal"
-              aria-label="Resize request list and diagram"
-              aria-orientation="horizontal"
-              aria-valuemin={180}
-              aria-valuemax={640}
-              aria-valuenow={Math.round(diagramHeight)}
-              tabIndex={0}
-              onPointerDown={startDiagramResize}
-            />
-
-            <SequenceDiagram
-              requests={pagedRequests}
-              selectedIds={selectedIds}
-              mode={diagramMode}
-              onModeChange={setDiagramMode}
-              onToggleRequest={(requestId) =>
-                setSelectedIds((current) => toggleSelection(current, requestId))
-              }
-            />
+            {diagramHidden ? (
+              <section class="panel panel--diagram-collapsed">
+                <div class="panel__header panel__header--tight">
+                  <div>
+                    <h2>Sequence diagram</h2>
+                    <p>Hidden. Expand to inspect request flow.</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="button button--ghost"
+                    onClick={() => setDiagramHidden(false)}
+                  >
+                    Show
+                  </button>
+                </div>
+              </section>
+            ) : (
+              <SequenceDiagram
+                requests={pagedRequests}
+                selectedIds={selectedIds}
+                mode={diagramMode}
+                onModeChange={setDiagramMode}
+                onHide={() => setDiagramHidden(true)}
+                onResizeStart={startDiagramResize}
+                onToggleRequest={(requestId) =>
+                  setSelectedIds((current) =>
+                    toggleSelection(current, requestId),
+                  )
+                }
+              />
+            )}
           </div>
         </section>
-
-        {!sidebarHidden && (
-          <hr
-            class="splitter splitter--vertical"
-            aria-label="Resize main workspace and details"
-            aria-orientation="vertical"
-            aria-valuemin={320}
-            aria-valuemax={720}
-            aria-valuenow={Math.round(sidebarWidth)}
-            tabIndex={0}
-            onPointerDown={startSidebarResize}
-          />
-        )}
 
         {!sidebarHidden && (
           <DetailsSidebar
@@ -1042,6 +1048,7 @@ export function App() {
             detailState={detailState}
             requestBodyState={requestBodyState}
             responseBodyState={responseBodyState}
+            onResizeStart={startSidebarResize}
           />
         )}
       </div>

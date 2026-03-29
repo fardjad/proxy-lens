@@ -10,6 +10,8 @@ interface SequenceDiagramProps {
   mode: DiagramMode
   onToggleRequest: (requestId: string) => void
   onModeChange: (mode: DiagramMode) => void
+  onHide: () => void
+  onResizeStart: (event: JSX.TargetedPointerEvent<HTMLDivElement>) => void
 }
 
 const MIN_ZOOM = 0.5
@@ -26,6 +28,8 @@ export function SequenceDiagram({
   mode,
   onToggleRequest,
   onModeChange,
+  onHide,
+  onResizeStart,
 }: SequenceDiagramProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const panRef = useRef<{
@@ -145,11 +149,19 @@ export function SequenceDiagram({
   if (requests.length === 0) {
     return (
       <div class="panel panel--diagram">
+        <div
+          class="panel-border-handle panel-border-handle--top"
+          onPointerDown={onResizeStart}
+          title="Drag to resize the sequence diagram"
+        />
         <div class="panel__header">
           <div>
             <h2>Sequence diagram</h2>
             <p>Edges appear here once requests are loaded.</p>
           </div>
+          <button type="button" class="button button--ghost" onClick={onHide}>
+            Hide
+          </button>
         </div>
         <div class="panel-empty">No filtered requests to diagram.</div>
       </div>
@@ -168,16 +180,28 @@ export function SequenceDiagram({
 
   return (
     <div class="panel panel--diagram">
+      <div
+        class="panel-border-handle panel-border-handle--top"
+        onPointerDown={onResizeStart}
+        title="Drag to resize the sequence diagram"
+      />
       <div class="panel__header">
         <div>
           <h2>Sequence diagram</h2>
           <p>Click a line to select. Drag to pan. Ctrl/Cmd + wheel to zoom.</p>
         </div>
-        <div class="diagram__header-actions">
-          <div class="diagram__controls">
-            <button
-              type="button"
-              class="button button--ghost"
+          <div class="diagram__header-actions">
+            <div class="diagram__controls">
+              <button
+                type="button"
+                class="button button--ghost"
+                onClick={onHide}
+              >
+                Hide
+              </button>
+              <button
+                type="button"
+                class="button button--ghost"
               onClick={() => applyZoom(zoom - ZOOM_STEP)}
               disabled={zoom <= MIN_ZOOM}
               aria-label="Zoom out"

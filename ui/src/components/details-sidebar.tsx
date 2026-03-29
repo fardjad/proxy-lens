@@ -1,3 +1,4 @@
+import type { JSX } from 'preact'
 import { useEffect, useMemo, useState } from 'preact/hooks'
 import type { BodyState, LoadState, RequestDetail } from '../types'
 import { displayUrl, formatBytes, formatTimestamp, headerValue } from '../utils'
@@ -8,6 +9,7 @@ interface DetailsSidebarProps {
   detailState: LoadState<RequestDetail>
   requestBodyState: BodyState
   responseBodyState: BodyState
+  onResizeStart: (event: JSX.TargetedPointerEvent<HTMLDivElement>) => void
 }
 
 function BodyPanel({
@@ -169,6 +171,7 @@ export function DetailsSidebar({
   detailState,
   requestBodyState,
   responseBodyState,
+  onResizeStart,
 }: DetailsSidebarProps) {
   const detail = detailState.status === 'ready' ? detailState.data : null
 
@@ -184,6 +187,11 @@ export function DetailsSidebar({
 
   return (
     <aside class="panel panel--sidebar">
+      <div
+        class="panel-border-handle panel-border-handle--left"
+        onPointerDown={(event) => onResizeStart(event)}
+        title="Drag to resize details sidebar"
+      />
       {selectedCount === 0 && (
         <div class="panel-empty">
           Select a request from the list or the sequence diagram.
