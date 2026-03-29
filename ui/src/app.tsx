@@ -1,5 +1,6 @@
 import type { JSX } from 'preact'
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+import proxyLensLogoUrl from './assets/proxylens-logo.svg'
 import './app.css'
 import {
   deleteRequests,
@@ -11,6 +12,7 @@ import {
 } from './api'
 import { decodeBodyPreview } from './body-preview'
 import { DetailsSidebar } from './components/details-sidebar'
+import { Icon } from './components/icon'
 import {
   type RequestGridFilters,
   type RequestGridSort,
@@ -39,6 +41,7 @@ import {
 
 const SEARCH_FIELDS = ['url', 'trace', 'request'] as const
 type SearchField = (typeof SEARCH_FIELDS)[number]
+type ThemeMode = 'light' | 'dark'
 const PAGE_SIZE = 100
 
 interface TimeFilters {
@@ -126,6 +129,20 @@ function readStoredJson<T>(
 
 function isSearchField(value: string): value is SearchField {
   return SEARCH_FIELDS.includes(value as SearchField)
+}
+
+function isThemeMode(value: string): value is ThemeMode {
+  return value === 'light' || value === 'dark'
+}
+
+function detectPreferredTheme(): ThemeMode {
+  if (typeof window === 'undefined') {
+    return 'light'
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light'
 }
 
 function isGridFilters(value: unknown): value is RequestGridFilters {
@@ -270,6 +287,10 @@ export function App() {
       ),
     )
   const [diagramMode, setDiagramMode] = useState<DiagramMode>('grouped')
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    const storedValue = readStoredText('proxylens.themeMode', '')
+    return isThemeMode(storedValue) ? storedValue : detectPreferredTheme()
+  })
   const [currentPage, setCurrentPage] = useState(() =>
     Math.max(0, Math.floor(readStoredSize('proxylens.currentPage', 0))),
   )
@@ -338,6 +359,11 @@ export function App() {
       JSON.stringify(timeShortcutAnchor),
     )
   }, [timeShortcutAnchor])
+
+  useEffect(() => {
+    window.localStorage.setItem('proxylens.themeMode', themeMode)
+    document.documentElement.dataset.theme = themeMode
+  }, [themeMode])
 
   useEffect(() => {
     window.localStorage.setItem('proxylens.currentPage', `${currentPage}`)
@@ -847,22 +873,58 @@ export function App() {
     <main class="shell">
       <header class="shell__header">
         <div class="shell__title">
+          <img
+            class="shell__logo"
+            src={proxyLensLogoUrl}
+            alt=""
+            width="20"
+            height="20"
+          />
           <strong>ProxyLens</strong>
         </div>
-        <button
-          type="button"
-          class="button button--ghost shell__header-toggle"
-          onClick={() => setSidebarHidden((current) => !current)}
-          aria-expanded={!sidebarHidden}
-          aria-label={
-            sidebarHidden ? 'Show details sidebar' : 'Hide details sidebar'
-          }
-          title={
-            sidebarHidden ? 'Show details sidebar' : 'Hide details sidebar'
-          }
-        >
-          {sidebarHidden ? '>' : '<'}
-        </button>
+        <div class="shell__header-actions">
+          <button
+            type="button"
+            class="button theme-toggle"
+            onClick={() =>
+              setThemeMode((current) =>
+                current === 'light' ? 'dark' : 'light',
+              )
+            }
+            aria-pressed={themeMode === 'dark'}
+            aria-label={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} mode`}
+            title={`Switch to ${themeMode === 'light' ? 'dark' : 'light'} mode`}
+          >
+            <span class="button__content theme-toggle__content">
+              <span class="theme-toggle__label">
+                {themeMode === 'light' ? 'Light' : 'Dark'}
+              </span>
+              <span class="theme-toggle__switch" aria-hidden="true">
+                <Icon
+                  name="circle-half"
+                  class="button__icon theme-toggle__icon"
+                />
+              </span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="button button--ghost button--icon-only shell__header-button"
+            onClick={() => setSidebarHidden((current) => !current)}
+            aria-expanded={!sidebarHidden}
+            aria-label={
+              sidebarHidden ? 'Show details sidebar' : 'Hide details sidebar'
+            }
+            title={
+              sidebarHidden ? 'Show details sidebar' : 'Hide details sidebar'
+            }
+          >
+            <Icon
+              name={sidebarHidden ? 'panel-left' : 'panel-right'}
+              class="button__icon"
+            />
+          </button>
+        </div>
       </header>
 
       <div
@@ -914,7 +976,10 @@ export function App() {
                 setCurrentPage(0)
               }}
             >
-              Clear
+              <span class="button__content">
+                <Icon name="x" class="button__icon" />
+                <span>Clear</span>
+              </span>
             </button>
           </section>
 
@@ -956,13 +1021,18 @@ export function App() {
             <button
               type="button"
               class="button button--ghost"
+              aria-label="Clear time filters"
+              title="Clear time filters"
               onClick={() => {
                 setTimeFilters(DEFAULT_TIME_FILTERS)
                 setTimeShortcutAnchor(null)
                 setCurrentPage(0)
               }}
             >
-              Clear time
+              <span class="button__content">
+                <Icon name="calendar" class="button__icon" />
+                <span>Clear</span>
+              </span>
             </button>
           </section>
 
@@ -984,6 +1054,7 @@ export function App() {
                 <RequestList
                   requests={pagedRequests}
                   totalRequests={filteredRequests.length}
+                  themeMode={themeMode}
                   page={currentPageClamped}
                   pageSize={PAGE_SIZE}
                   selectedIds={selectedIds}
@@ -1016,10 +1087,13 @@ export function App() {
                   </div>
                   <button
                     type="button"
-                    class="button button--ghost"
+                    class="button button--accent"
                     onClick={() => setDiagramHidden(false)}
                   >
-                    Show
+                    <span class="button__content">
+                      <Icon name="eye" class="button__icon" />
+                      <span>Show</span>
+                    </span>
                   </button>
                 </div>
               </section>
@@ -1067,7 +1141,10 @@ export function App() {
           disabled={selectedIds.length === 0}
           onClick={handleDeleteSelected}
         >
-          Delete
+          <span class="button__content">
+            <Icon name="trash" class="button__icon" />
+            <span>Delete</span>
+          </span>
         </button>
       </footer>
     </main>

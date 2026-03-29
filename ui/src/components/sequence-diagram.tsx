@@ -3,6 +3,7 @@ import { useRef, useState } from 'preact/hooks'
 import { buildSequenceDiagramModel, ORIGIN_COLUMN } from '../diagram'
 import type { DiagramMode, RequestSummary } from '../types'
 import { classNames, compactId } from '../utils'
+import { Icon } from './icon'
 
 interface SequenceDiagramProps {
   requests: RequestSummary[]
@@ -160,7 +161,10 @@ export function SequenceDiagram({
             <p>Edges appear here once requests are loaded.</p>
           </div>
           <button type="button" class="button button--ghost" onClick={onHide}>
-            Hide
+            <span class="button__content">
+              <Icon name="eye-off" class="button__icon" />
+              <span>Hide</span>
+            </span>
           </button>
         </div>
         <div class="panel-empty">No filtered requests to diagram.</div>
@@ -190,18 +194,17 @@ export function SequenceDiagram({
           <h2>Sequence diagram</h2>
           <p>Click a line to select. Drag to pan. Ctrl/Cmd + wheel to zoom.</p>
         </div>
-          <div class="diagram__header-actions">
-            <div class="diagram__controls">
-              <button
-                type="button"
-                class="button button--ghost"
-                onClick={onHide}
-              >
-                Hide
-              </button>
-              <button
-                type="button"
-                class="button button--ghost"
+        <div class="diagram__header-actions">
+          <div class="diagram__controls">
+            <button type="button" class="button button--ghost" onClick={onHide}>
+              <span class="button__content">
+                <Icon name="eye-off" class="button__icon" />
+                <span>Hide</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              class="button button--ghost"
               onClick={() => applyZoom(zoom - ZOOM_STEP)}
               disabled={zoom <= MIN_ZOOM}
               aria-label="Zoom out"
@@ -230,7 +233,10 @@ export function SequenceDiagram({
               class="button button--ghost"
               onClick={resetView}
             >
-              Reset
+              <span class="button__content">
+                <Icon name="rotate-ccw" class="button__icon" />
+                <span>Reset</span>
+              </span>
             </button>
           </div>
           <div class="segmented">

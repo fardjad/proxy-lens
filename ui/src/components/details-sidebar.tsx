@@ -2,6 +2,7 @@ import type { JSX } from 'preact'
 import { useEffect, useMemo, useState } from 'preact/hooks'
 import type { BodyState, LoadState, RequestDetail } from '../types'
 import { displayUrl, formatBytes, formatTimestamp, headerValue } from '../utils'
+import { Icon } from './icon'
 
 interface DetailsSidebarProps {
   selectedCount: number
@@ -76,7 +77,13 @@ function BodyPanel({
             class="button button--ghost"
             onClick={() => setPrettyJson((current) => !current)}
           >
-            {prettyJson ? 'Raw' : 'Pretty JSON'}
+            <span class="button__content">
+              <Icon
+                name={prettyJson ? 'rotate-ccw' : 'braces'}
+                class="button__icon"
+              />
+              <span>{prettyJson ? 'Raw' : 'Pretty JSON'}</span>
+            </span>
           </button>
         )}
       </div>
@@ -111,7 +118,10 @@ function BodyPanel({
               href={downloadUrl}
               download={`${title.toLowerCase().replace(/\s+/g, '-')}.bin`}
             >
-              Download body
+              <span class="button__content">
+                <Icon name="download" class="button__icon" />
+                <span>Download body</span>
+              </span>
             </a>
           )}
         </div>

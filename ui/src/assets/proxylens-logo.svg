@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A" />
+      <stop offset="1" stop-color="#1D4ED8" />
+    </linearGradient>
+    <linearGradient id="lens" x1="18" y1="18" x2="46" y2="46" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7DD3FC" stop-opacity="0.95" />
+      <stop offset="1" stop-color="#38BDF8" stop-opacity="0.35" />
+    </linearGradient>
+  </defs>
+
+  <rect x="6" y="6" width="52" height="52" rx="16" fill="url(#bg)" />
+
+  <path
+    d="M18 40L27 31L34 35L44 24"
+    stroke="#93C5FD"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.9"
+  />
+
+  <circle cx="18" cy="40" r="3.5" fill="#BFDBFE" />
+  <circle cx="27" cy="31" r="3.5" fill="#BFDBFE" />
+  <circle cx="34" cy="35" r="3.5" fill="#BFDBFE" />
+  <circle cx="44" cy="24" r="3.5" fill="#BFDBFE" />
+
+  <circle cx="31" cy="31" r="12" fill="url(#lens)" stroke="#E0F2FE" stroke-width="3" />
+  <path
+    d="M38.5 38.5L47 47"
+    stroke="#E0F2FE"
+    stroke-width="4.5"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M24 33L28 29L31 30.5L35.5 26"
+    stroke="#F8FAFC"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <circle cx="24" cy="33" r="2" fill="#F8FAFC" />
+  <circle cx="28" cy="29" r="2" fill="#F8FAFC" />
+  <circle cx="31" cy="30.5" r="2" fill="#F8FAFC" />
+  <circle cx="35.5" cy="26" r="2" fill="#F8FAFC" />
+</svg>

@@ -20,6 +20,47 @@
   --accent: #205493;
   --alert: #ad4f22;
   --selection: #e8f0fb;
+  --button-danger-border: rgba(159, 69, 31, 0.22);
+  --button-danger-bg: #fff4ee;
+  --button-danger-ink: #8d3a14;
+  --overlay-panel: rgba(255, 255, 255, 0.92);
+  --floating-shadow: 0 8px 24px rgba(21, 27, 35, 0.12);
+  --diagram-lifeline: rgba(24, 30, 37, 0.18);
+  --diagram-group-fill: #f5f7fa;
+  --diagram-group-stroke: rgba(24, 30, 37, 0.14);
+  --diagram-request-line: rgba(34, 64, 110, 0.7);
+  --diagram-request-node: rgba(34, 64, 110, 0.8);
+  --body-preview-bg: #11161c;
+  --body-preview-ink: #edf2f7;
+}
+
+:root[data-theme="dark"] {
+  color: #f5f5f7;
+  background: #161617;
+  color-scheme: dark;
+  --background: #161617;
+  --ink: #f5f5f7;
+  --ink-soft: #a1a1a6;
+  --panel: #1c1c1e;
+  --surface: #242426;
+  --surface-muted: #2c2c2e;
+  --line: #3a3a3c;
+  --line-strong: #545458;
+  --accent: #0a84ff;
+  --alert: #ff9a6a;
+  --selection: #2c3d52;
+  --button-danger-border: rgba(255, 154, 106, 0.28);
+  --button-danger-bg: #301810;
+  --button-danger-ink: #ffc3aa;
+  --overlay-panel: rgba(28, 28, 30, 0.96);
+  --floating-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  --diagram-lifeline: rgba(161, 161, 166, 0.26);
+  --diagram-group-fill: #202022;
+  --diagram-group-stroke: rgba(161, 161, 166, 0.18);
+  --diagram-request-line: rgba(10, 132, 255, 0.82);
+  --diagram-request-node: rgba(10, 132, 255, 0.92);
+  --body-preview-bg: #111113;
+  --body-preview-ink: #f5f5f7;
 }
 
 * {

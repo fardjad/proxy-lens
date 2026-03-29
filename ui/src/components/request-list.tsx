@@ -19,6 +19,7 @@ import {
   type RequestState,
   requestDisplayUrl,
 } from '../utils'
+import { Icon } from './icon'
 
 export type RequestGridSortKey =
   | 'method'
@@ -50,6 +51,7 @@ export interface RequestGridFilters {
 interface RequestListProps {
   requests: RequestSummary[]
   totalRequests: number
+  themeMode: 'light' | 'dark'
   page: number
   pageSize: number
   selectedIds: string[]
@@ -89,23 +91,54 @@ const FILTERABLE_COLUMNS = new Set<RequestGridFilterKey>([
   'request',
 ])
 
-const GRID_THEME = {
-  accentColor: '#205493',
-  accentFg: '#ffffff',
-  accentLight: '#e8f0fb',
-  textDark: '#151b23',
-  textMedium: '#667281',
-  textLight: '#8793a1',
-  bgCell: '#ffffff',
-  bgCellMedium: '#f7f9fb',
-  bgHeader: '#f7f9fb',
-  bgHeaderHasFocus: '#eef3f8',
-  bgBubble: '#eef3f8',
-  horizontalBorderColor: '#d7dee7',
-  verticalBorderColor: '#e6ebf1',
-  headerBottomBorderColor: '#d7dee7',
-  borderColor: '#d7dee7',
-  linkColor: '#205493',
+const GRID_THEMES = {
+  light: {
+    accentColor: '#205493',
+    accentFg: '#ffffff',
+    accentLight: '#e8f0fb',
+    textDark: '#151b23',
+    textMedium: '#667281',
+    textLight: '#8793a1',
+    bgCell: '#ffffff',
+    bgCellMedium: '#f7f9fb',
+    bgHeader: '#f7f9fb',
+    bgHeaderHasFocus: '#eef3f8',
+    bgBubble: '#eef3f8',
+    horizontalBorderColor: '#d7dee7',
+    verticalBorderColor: '#e6ebf1',
+    headerBottomBorderColor: '#d7dee7',
+    borderColor: '#d7dee7',
+    linkColor: '#205493',
+  },
+  dark: {
+    accentColor: '#0a84ff',
+    accentFg: '#ffffff',
+    accentLight: '#2c3d52',
+    textDark: '#f5f5f7',
+    textMedium: '#a1a1a6',
+    textLight: '#8e8e93',
+    bgCell: '#1c1c1e',
+    bgCellMedium: '#242426',
+    bgHeader: '#242426',
+    bgHeaderHasFocus: '#2c2c2e',
+    bgBubble: '#2c2c2e',
+    horizontalBorderColor: '#3a3a3c',
+    verticalBorderColor: '#2f2f31',
+    headerBottomBorderColor: '#3a3a3c',
+    borderColor: '#3a3a3c',
+    linkColor: '#4da3ff',
+  },
+} as const
+
+const SELECTED_ROW_THEMES = {
+  light: {
+    bgCell: '#e8f0fb',
+    bgCellMedium: '#e8f0fb',
+  },
+  dark: {
+    bgCell: '#2c3d52',
+    bgCellMedium: '#2c3d52',
+  },
 } as const
 
 function readStoredWidths() {
@@ -192,6 +225,7 @@ function collectSelectedRowIndexes(selection: GridSelection) {
 export function RequestList({
   requests,
   totalRequests,
+  themeMode,
   page,
   pageSize,
   selectedIds,
@@ -495,14 +529,9 @@ export function RequestList({
             }))
           }}
           getRowThemeOverride={(row) =>
-            selectedRowSet.has(row)
-              ? {
-                  bgCell: '#e8f0fb',
-                  bgCellMedium: '#e8f0fb',
-                }
-              : undefined
+            selectedRowSet.has(row) ? SELECTED_ROW_THEMES[themeMode] : undefined
           }
-          theme={GRID_THEME}
+          theme={GRID_THEMES[themeMode]}
         />
 
         {requests.length === 0 && (
@@ -523,7 +552,10 @@ export function RequestList({
             disabled={page <= 0}
             onClick={() => onPageChange(page - 1)}
           >
-            Prev
+            <span class="button__content">
+              <Icon name="chevron-left" class="button__icon" />
+              <span>Prev</span>
+            </span>
           </button>
           <span>
             Page {totalRequests === 0 ? 0 : page + 1} of {totalPages}
@@ -534,7 +566,10 @@ export function RequestList({
             disabled={page >= totalPages - 1 || totalRequests === 0}
             onClick={() => onPageChange(page + 1)}
           >
-            Next
+            <span class="button__content">
+              <span>Next</span>
+              <Icon name="chevron-right" class="button__icon" />
+            </span>
           </button>
         </div>
       </div>
@@ -641,17 +676,23 @@ export function RequestList({
                 setHeaderMenu(null)
               }}
             >
-              Clear
+              <span class="button__content">
+                <Icon name="x" class="button__icon" />
+                <span>Clear</span>
+              </span>
             </button>
             <button
               type="button"
-              class="button button--ghost"
+              class="button button--accent"
               onClick={() => {
                 applyHeaderFilter(headerMenu.columnId, headerMenu.draft)
                 setHeaderMenu(null)
               }}
             >
-              Apply
+              <span class="button__content">
+                <Icon name="apply" class="button__icon" />
+                <span>Apply</span>
+              </span>
             </button>
           </div>
         </div>
@@ -677,7 +718,10 @@ export function RequestList({
               setRowMenu(null)
             }}
           >
-            Hide requests before this
+            <span class="button__content">
+              <Icon name="chevrons-left" class="button__icon" />
+              <span>Hide requests before this</span>
+            </span>
           </button>
           <button
             type="button"
@@ -687,7 +731,10 @@ export function RequestList({
               setRowMenu(null)
             }}
           >
-            Hide requests after this
+            <span class="button__content">
+              <Icon name="chevrons-right" class="button__icon" />
+              <span>Hide requests after this</span>
+            </span>
           </button>
         </div>
       )}
