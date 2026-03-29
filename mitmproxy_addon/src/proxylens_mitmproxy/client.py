@@ -9,7 +9,6 @@ from urllib.request import Request, urlopen
 
 from proxylens_mitmproxy.models import CaptureEvent, serialize_event
 
-DEFAULT_PROXYLENS_SERVER_BASE_URL = "http://127.0.0.1:8000"
 DEFAULT_PROXYLENS_SERVER_BASE_URL_ENV_VAR = "PROXYLENS_SERVER_BASE_URL"
 _SUCCESSFUL_EVENT_STATUSES = {"accepted", "ignored", "deferred", "dropped"}
 
@@ -36,6 +35,11 @@ class ProxyLensServerClient:
             base_url=base_url,
             env_var=base_url_env_var,
         )
+        if self.base_url is None:
+            raise ValueError(
+                "ProxyLens server base URL is not configured; set base_url or "
+                f"{base_url_env_var}"
+            )
         self.timeout_seconds = timeout_seconds
 
     def upload_blob(self, blob_id: str, data: bytes | BinaryIO) -> None:
@@ -137,6 +141,8 @@ def resolve_server_base_url(
     *,
     base_url: str | None = None,
     env_var: str = DEFAULT_PROXYLENS_SERVER_BASE_URL_ENV_VAR,
-) -> str:
-    resolved = base_url or os.environ.get(env_var) or DEFAULT_PROXYLENS_SERVER_BASE_URL
+) -> str | None:
+    resolved = base_url or os.environ.get(env_var)
+    if resolved is None:
+        return None
     return resolved.rstrip("/")

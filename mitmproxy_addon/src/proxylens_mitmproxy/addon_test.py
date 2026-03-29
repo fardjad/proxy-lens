@@ -128,6 +128,64 @@ def test_addon_builds_default_http_client_from_env(
     assert addon._client.base_url == "http://server.test:9010"
 
 
+def test_addon_is_disabled_when_server_base_url_is_unset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("PROXYLENS_SERVER_BASE_URL", raising=False)
+
+    addon = ProxyLens(node_name="proxy-a")
+
+    assert addon._disabled is True
+    assert addon._client is None
+
+
+def test_disabled_addon_logs_enablement_warning(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    monkeypatch.delenv("PROXYLENS_SERVER_BASE_URL", raising=False)
+    addon = ProxyLens(node_name="proxy-a")
+
+    with caplog.at_level("WARNING"):
+        addon.load(object())
+
+    assert "ProxyLens addon is disabled because no server base URL is configured" in caplog.text
+    assert "PROXYLENS_SERVER_BASE_URL" in caplog.text
+
+
+def test_enabled_addon_does_not_log_disabled_warning(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    monkeypatch.setenv("PROXYLENS_SERVER_BASE_URL", "http://server.test:9010")
+    addon = ProxyLens(node_name="proxy-a")
+
+    with caplog.at_level("WARNING"):
+        addon.load(object())
+
+    assert caplog.records == []
+
+
+def test_disabled_addon_is_noop_without_touching_flow(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("PROXYLENS_SERVER_BASE_URL", raising=False)
+    addon = ProxyLens(node_name="proxy-a")
+    flow = tflow.tflow(
+        req=http.Request.make("POST", "https://example.test/widgets", content=b"abc"),
+        resp=http.Response.make(200, b"ok"),
+    )
+
+    addon.requestheaders(flow)
+    addon.request(flow)
+    addon.responseheaders(flow)
+    addon.response(flow)
+
+    assert flow.metadata == {}
+    assert PROXYLENS_HOP_CHAIN_HEADER not in flow.request.headers
+    assert PROXYLENS_REQUEST_ID_HEADER not in flow.request.headers
+
+
 def test_invalid_max_concurrent_requests_per_host_raises() -> None:
     client = RecordingProxyLensServerClient()
 

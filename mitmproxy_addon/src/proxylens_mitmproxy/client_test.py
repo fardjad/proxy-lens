@@ -49,6 +49,23 @@ def test_resolve_server_base_url_uses_env_var(monkeypatch: pytest.MonkeyPatch) -
     assert resolve_server_base_url() == "http://server.test:9999"
 
 
+def test_resolve_server_base_url_returns_none_when_unset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("PROXYLENS_SERVER_BASE_URL", raising=False)
+
+    assert resolve_server_base_url() is None
+
+
+def test_http_client_requires_base_url_when_not_configured(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("PROXYLENS_SERVER_BASE_URL", raising=False)
+
+    with pytest.raises(ValueError, match="ProxyLens server base URL is not configured"):
+        ProxyLensServerClient()
+
+
 def test_http_client_uploads_blobs_and_submits_events() -> None:
     with _recording_server() as server:
         client = ProxyLensServerClient(base_url=server["base_url"])

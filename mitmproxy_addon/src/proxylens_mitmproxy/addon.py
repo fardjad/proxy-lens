@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from collections import defaultdict, deque
 from collections.abc import Callable, Iterable
@@ -11,6 +12,7 @@ from proxylens_mitmproxy.client import (
     DEFAULT_PROXYLENS_SERVER_BASE_URL_ENV_VAR,
     ProxyLensServerClient,
     SupportsProxyLensServerClient,
+    resolve_server_base_url,
 )
 from proxylens_mitmproxy.models import (
     CaptureContext,
@@ -49,6 +51,8 @@ DEFAULT_MAX_CONCURRENT_REQUESTS_PER_HOST_ENV_VAR = (
 
 type FlowFilter = Callable[[http.HTTPFlow], bool]
 
+_logger = logging.getLogger(__name__)
+
 
 class ProxyLens:
     def __init__(
@@ -75,9 +79,18 @@ class ProxyLens:
                 env_var=max_concurrent_requests_per_host_env_var,
             )
         )
-        self._client = client or ProxyLensServerClient(
-            base_url=server_base_url,
-            base_url_env_var=server_base_url_env_var,
+        resolved_server_base_url = None
+        if client is None:
+            resolved_server_base_url = resolve_server_base_url(
+                base_url=server_base_url,
+                env_var=server_base_url_env_var,
+            )
+        self._disabled = client is None and resolved_server_base_url is None
+        self._disabled_warning_emitted = False
+        self._client = client or (
+            None
+            if self._disabled
+            else ProxyLensServerClient(base_url=resolved_server_base_url)
         )
         self._node_name = resolve_node_name(node_name, env_var=node_name_env_var)
         self._trace_id_generator = trace_id_generator or generate_trace_id
@@ -91,7 +104,13 @@ class ProxyLens:
         self._active_flow_ids_by_host: dict[str, set[str]] = defaultdict(set)
         self._queued_flows_by_host: dict[str, deque[http.HTTPFlow]] = defaultdict(deque)
 
+    def load(self, loader: object) -> None:
+        del loader
+        self._warn_if_disabled()
+
     def requestheaders(self, flow: http.HTTPFlow) -> None:
+        if self._disabled:
+            return
         if not self._flow_filter(flow):
             flow.metadata[_STATE_KEY] = {"enabled": False}
             return
@@ -112,6 +131,8 @@ class ProxyLens:
         self._begin_flow_capture(flow, slot_acquired=counts_toward_limit)
 
     def request(self, flow: http.HTTPFlow) -> None:
+        if self._disabled:
+            return
         if not self._is_enabled(flow):
             return
         self._emit_body_events(flow, _REQUEST)
@@ -119,6 +140,8 @@ class ProxyLens:
         self._submit(flow, HttpRequestCompletedEvent(context=self._next_context(flow)))
 
     def responseheaders(self, flow: http.HTTPFlow) -> None:
+        if self._disabled:
+            return
         if not self._is_enabled(flow) or flow.response is None:
             return
         self._wrap_stream(flow, _RESPONSE)
@@ -133,6 +156,8 @@ class ProxyLens:
         )
 
     def response(self, flow: http.HTTPFlow) -> None:
+        if self._disabled:
+            return
         if not self._is_enabled(flow) or flow.response is None:
             return
         self._emit_body_events(flow, _RESPONSE)
@@ -142,6 +167,8 @@ class ProxyLens:
             self._finish_flow(flow)
 
     def websocket_start(self, flow: http.HTTPFlow) -> None:
+        if self._disabled:
+            return
         if not self._is_enabled(flow):
             return
         self._submit(
@@ -155,6 +182,8 @@ class ProxyLens:
         )
 
     def websocket_message(self, flow: http.HTTPFlow) -> None:
+        if self._disabled:
+            return
         if (
             not self._is_enabled(flow)
             or flow.websocket is None
@@ -182,6 +211,8 @@ class ProxyLens:
         self._submit(flow, event)
 
     def websocket_end(self, flow: http.HTTPFlow) -> None:
+        if self._disabled:
+            return
         if not self._is_enabled(flow):
             return
         close_code = flow.websocket.close_code if flow.websocket is not None else None
@@ -195,6 +226,8 @@ class ProxyLens:
         self._finish_flow(flow)
 
     def error(self, flow: http.HTTPFlow) -> None:
+        if self._disabled:
+            return
         if not self._is_enabled(flow) or flow.error is None:
             self._finish_flow(flow)
             return
@@ -348,9 +381,13 @@ class ProxyLens:
 
     def _submit(self, flow: http.HTTPFlow, event: object) -> None:
         del flow
+        if self._client is None:
+            return
         self._client.submit_event(event)
 
     def _upload_blob(self, data: bytes) -> str:
+        if self._client is None:
+            raise RuntimeError("ProxyLens client is not configured")
         blob_id = self._blob_id_generator()
         self._client.upload_blob(blob_id, data)
         return blob_id
@@ -487,6 +524,17 @@ class ProxyLens:
             flow.resume()
 
         self._queued_flows_by_host.pop(host, None)
+
+    def _warn_if_disabled(self) -> None:
+        if not self._disabled or self._disabled_warning_emitted:
+            return
+        self._disabled_warning_emitted = True
+        _logger.warning(
+            "ProxyLens addon is disabled because no server base URL is configured. "
+            "To enable it, pass server_base_url=... when constructing ProxyLens, "
+            "set %s, or inject a client=ProxyLensServerClient(...).",
+            DEFAULT_PROXYLENS_SERVER_BASE_URL_ENV_VAR,
+        )
 
 
 def _normalize_headers(headers: http.Headers) -> HeaderPairs:

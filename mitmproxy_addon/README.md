@@ -147,7 +147,9 @@ ProxyLens(
 ```
 
 `flow_filter(flow)` can be used to skip capture for selected flows.
-`server_base_url` is only used when `client` is not injected.
+`server_base_url` is only used when `client` is not injected. If it is unset and
+`PROXYLENS_SERVER_BASE_URL` is also unset, the addon disables itself and becomes
+an early no-op.
 `max_concurrent_requests_per_host` limits how many flows can be active at once
 for each destination host; excess flows for that host are queued inside
 mitmproxy until a slot becomes available.
