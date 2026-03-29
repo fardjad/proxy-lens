@@ -8,6 +8,10 @@ _install-deps:
     cd mitmproxy_addon && env -u VIRTUAL_ENV uv sync --dev
     cd ui && bun install
 
+# Ensure package versions match VERSION.txt before release workflows.
+_check-version-sync:
+    env -u VIRTUAL_ENV uv run python hack/sync_version.py --check
+
 # Build and validate both Python distributions for local development.
 build: _install-deps
     just --justfile server/justfile --working-directory server build
@@ -38,11 +42,11 @@ sync-version *args='':
     env -u VIRTUAL_ENV uv run python hack/sync_version.py {{args}}
 
 # Publish the mitmproxy addon and optionally the runtime Docker image.
-publish repository='pypi' image='': _install-deps
+publish repository='pypi' image='fardjad/proxylens': build _check-version-sync
     just --justfile mitmproxy_addon/justfile --working-directory mitmproxy_addon publish {{repository}}
     if [ -n "{{image}}" ]; then \
-        version="$$(tr -d '\n' < VERSION.txt)"; \
-        docker build -t "{{image}}:$${version}" -t "{{image}}:latest" .; \
-        docker push "{{image}}:$${version}"; \
+        version="$(tr -d '\n' < VERSION.txt)"; \
+        docker build -t "{{image}}:${version}" -t "{{image}}:latest" .; \
+        docker push "{{image}}:${version}"; \
         docker push "{{image}}:latest"; \
     fi
