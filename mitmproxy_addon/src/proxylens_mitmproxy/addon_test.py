@@ -149,7 +149,10 @@ def test_disabled_addon_logs_enablement_warning(
     with caplog.at_level("WARNING"):
         addon.load(object())
 
-    assert "ProxyLens addon is disabled because no server base URL is configured" in caplog.text
+    assert (
+        "ProxyLens addon is disabled because no server base URL is configured"
+        in caplog.text
+    )
     assert "PROXYLENS_SERVER_BASE_URL" in caplog.text
 
 

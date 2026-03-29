@@ -20,7 +20,11 @@ export function RequestToolbar({
         <span>{totalCount} visible</span>
       </div>
       <div class="toolbar__actions">
-        <button type="button" class="button button--ghost" onClick={onSelectAll}>
+        <button
+          type="button"
+          class="button button--ghost"
+          onClick={onSelectAll}
+        >
           Select all
         </button>
         <button type="button" class="button button--ghost" onClick={onInvert}>

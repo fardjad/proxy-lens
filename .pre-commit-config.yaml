@@ -1,0 +1,39 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # The UI tsconfig files use JSONC comments, so strict JSON validation
+      # would reject them even though TypeScript accepts them.
+      - id: check-json
+        exclude: ^ui/tsconfig.*\.json$
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: sync-version-check
+        name: sync-version-check
+        entry: just sync-version --check
+        language: system
+        pass_filenames: false
+
+      - id: mitmproxy-addon-style-check
+        name: mitmproxy-addon-style-check
+        entry: just --justfile mitmproxy_addon/justfile --working-directory mitmproxy_addon style-check
+        language: system
+        pass_filenames: false
+
+      - id: server-style-check
+        name: server-style-check
+        entry: just --justfile server/justfile --working-directory server style-check
+        language: system
+        pass_filenames: false
+
+      - id: ui-style-check
+        name: ui-style-check
+        entry: npm --prefix ui run style-check
+        language: system
+        pass_filenames: false

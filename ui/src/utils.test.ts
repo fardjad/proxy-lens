@@ -40,7 +40,10 @@ describe('selection helpers', () => {
   })
 
   it('inverts only within the filtered request set', () => {
-    expect(invertSelection(['a', 'c'], ['a', 'b', 'c', 'd'])).toEqual(['b', 'd'])
+    expect(invertSelection(['a', 'c'], ['a', 'b', 'c', 'd'])).toEqual([
+      'b',
+      'd',
+    ])
   })
 
   it('keeps the exact clicked item as the frontend anchor when timestamps tie', () => {

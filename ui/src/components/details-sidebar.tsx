@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState } from 'preact/hooks'
 import type { BodyState, LoadState, RequestDetail } from '../types'
-import {
-  displayUrl,
-  formatBytes,
-  formatTimestamp,
-  headerValue,
-} from '../utils'
+import { displayUrl, formatBytes, formatTimestamp, headerValue } from '../utils'
 
 interface DetailsSidebarProps {
   selectedCount: number
@@ -55,14 +50,9 @@ function BodyPanel({
       return
     }
 
-    const stableBlob = new Blob(
-      [
-        Uint8Array.from(bodyState.data.bytes),
-      ],
-      {
-        type: effectiveContentType ?? 'application/octet-stream',
-      },
-    )
+    const stableBlob = new Blob([Uint8Array.from(bodyState.data.bytes)], {
+      type: effectiveContentType ?? 'application/octet-stream',
+    })
     const nextUrl = URL.createObjectURL(stableBlob)
     setDownloadUrl((current) => {
       if (current) {
@@ -73,10 +63,6 @@ function BodyPanel({
 
     return () => URL.revokeObjectURL(nextUrl)
   }, [bodyState, effectiveContentType])
-
-  useEffect(() => {
-    setPrettyJson(false)
-  }, [formattedJson])
 
   return (
     <section class="details-section">
@@ -92,10 +78,20 @@ function BodyPanel({
           </button>
         )}
       </div>
-      {bodyState.status === 'idle' && <div class="panel-empty">Select one request to load body data.</div>}
-      {bodyState.status === 'loading' && <div class="panel-empty">Loading body…</div>}
-      {bodyState.status === 'missing' && <div class="panel-empty">No stored body for this side of the exchange.</div>}
-      {bodyState.status === 'error' && <div class="panel-empty">{bodyState.error}</div>}
+      {bodyState.status === 'idle' && (
+        <div class="panel-empty">Select one request to load body data.</div>
+      )}
+      {bodyState.status === 'loading' && (
+        <div class="panel-empty">Loading body…</div>
+      )}
+      {bodyState.status === 'missing' && (
+        <div class="panel-empty">
+          No stored body for this side of the exchange.
+        </div>
+      )}
+      {bodyState.status === 'error' && (
+        <div class="panel-empty">{bodyState.error}</div>
+      )}
       {bodyState.status === 'ready' && bodyState.preview.kind === 'text' && (
         <pre class="body-preview">
           {prettyJson && formattedJson ? formattedJson : bodyState.preview.text}
@@ -108,7 +104,11 @@ function BodyPanel({
             {effectiveContentType ? ` · ${effectiveContentType}` : ''}
           </div>
           {downloadUrl && (
-            <a class="button button--ghost" href={downloadUrl} download={`${title.toLowerCase().replace(/\s+/g, '-')}.bin`}>
+            <a
+              class="button button--ghost"
+              href={downloadUrl}
+              download={`${title.toLowerCase().replace(/\s+/g, '-')}.bin`}
+            >
               Download body
             </a>
           )}
@@ -151,8 +151,8 @@ function HeaderTable({
         <div class="panel-empty">None recorded.</div>
       ) : (
         <div class="header-list">
-          {headers.map(([key, value], index) => (
-            <div class="header-list__row" key={`${key}-${index}`}>
+          {headers.map(([key, value]) => (
+            <div class="header-list__row" key={`${key}:${value}`}>
               <strong>{key}</strong>
               <span>{value}</span>
             </div>
@@ -170,29 +170,30 @@ export function DetailsSidebar({
   requestBodyState,
   responseBodyState,
 }: DetailsSidebarProps) {
-  const detail =
-    detailState.status === 'ready'
-      ? detailState.data
-      : null
+  const detail = detailState.status === 'ready' ? detailState.data : null
 
   const requestContentType = useMemo(
     () => (detail ? headerValue(detail.request_headers, 'content-type') : null),
     [detail],
   )
   const responseContentType = useMemo(
-    () => (detail ? headerValue(detail.response_headers, 'content-type') : null),
+    () =>
+      detail ? headerValue(detail.response_headers, 'content-type') : null,
     [detail],
   )
 
   return (
     <aside class="panel panel--sidebar">
       {selectedCount === 0 && (
-        <div class="panel-empty">Select a request from the list or the sequence diagram.</div>
+        <div class="panel-empty">
+          Select a request from the list or the sequence diagram.
+        </div>
       )}
 
       {selectedCount > 1 && (
         <div class="panel-empty">
-          {selectedCount} requests selected. Narrow to one request to inspect headers and bodies.
+          {selectedCount} requests selected. Narrow to one request to inspect
+          headers and bodies.
         </div>
       )}
 
@@ -229,15 +230,27 @@ export function DetailsSidebar({
             />
           </section>
 
-          <HeaderTable title="Request headers" headers={detail.request_headers} />
-          <HeaderTable title="Request trailers" headers={detail.request_trailers} />
+          <HeaderTable
+            title="Request headers"
+            headers={detail.request_headers}
+          />
+          <HeaderTable
+            title="Request trailers"
+            headers={detail.request_trailers}
+          />
           <BodyPanel
             title="Request body"
             bodyState={requestBodyState}
             fallbackContentType={requestContentType}
           />
-          <HeaderTable title="Response headers" headers={detail.response_headers} />
-          <HeaderTable title="Response trailers" headers={detail.response_trailers} />
+          <HeaderTable
+            title="Response headers"
+            headers={detail.response_headers}
+          />
+          <HeaderTable
+            title="Response trailers"
+            headers={detail.response_trailers}
+          />
           <BodyPanel
             title="Response body"
             bodyState={responseBodyState}
@@ -256,7 +269,10 @@ export function DetailsSidebar({
                   <div class="websocket-log__entry" key={message.event_index}>
                     <strong>{message.direction}</strong>
                     <span>{message.payload_type}</span>
-                    <span>{message.payload_text ?? `Blob ${message.blob_id ?? 'unknown'}`}</span>
+                    <span>
+                      {message.payload_text ??
+                        `Blob ${message.blob_id ?? 'unknown'}`}
+                    </span>
                   </div>
                 ))}
               </div>

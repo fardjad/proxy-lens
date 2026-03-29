@@ -12,10 +12,6 @@ build:
     uv build
     uvx twine check dist/*
 
-# Publish the server distribution to the selected package index.
-publish repository='pypi': build
-    uvx twine upload --repository {{repository}} dist/*
-
 # Run the server test suite.
 test:
     env -u VIRTUAL_ENV uv run python -m pytest

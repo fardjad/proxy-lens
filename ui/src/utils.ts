@@ -30,7 +30,9 @@ export const COMMON_METHODS = [
   'OPTIONS',
 ] as const
 
-export function classNames(...values: Array<string | false | null | undefined>) {
+export function classNames(
+  ...values: Array<string | false | null | undefined>
+) {
   return values.filter(Boolean).join(' ')
 }
 
@@ -197,7 +199,10 @@ export function toggleSelection(selectedIds: string[], requestId: string) {
     : [...selectedIds, requestId]
 }
 
-export function intersectSelection(selectedIds: string[], visibleIds: string[]) {
+export function intersectSelection(
+  selectedIds: string[],
+  visibleIds: string[],
+) {
   const visible = new Set(visibleIds)
   return selectedIds.filter((id) => visible.has(id))
 }
@@ -343,12 +348,13 @@ export function buildFilterChips(
     })
   }
 
-  const booleanFilters: Array<['complete' | 'requestComplete' | 'responseComplete', string]> =
-    [
-      ['complete', 'Complete'],
-      ['requestComplete', 'Request complete'],
-      ['responseComplete', 'Response complete'],
-    ]
+  const booleanFilters: Array<
+    ['complete' | 'requestComplete' | 'responseComplete', string]
+  > = [
+    ['complete', 'Complete'],
+    ['requestComplete', 'Request complete'],
+    ['responseComplete', 'Response complete'],
+  ]
 
   for (const [key, label] of booleanFilters) {
     const value = filters[key]

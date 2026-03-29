@@ -1,23 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import {
   type CellClickedEventArgs,
   CompactSelection,
   DataEditor,
-  GridCellKind,
   type GridCell,
+  GridCellKind,
   type GridColumn,
   type GridSelection,
   type Item,
   type Rectangle,
 } from '@glideapps/glide-data-grid'
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import '@glideapps/glide-data-grid/dist/index.css'
 import type { RequestSummary } from '../types'
 import {
   formatRequestState,
   formatTimestamp,
   getRequestState,
-  requestDisplayUrl,
   type RequestState,
+  requestDisplayUrl,
 } from '../utils'
 
 export type RequestGridSortKey =
@@ -138,7 +138,10 @@ function makeTextCell(value: string): GridCell {
   }
 }
 
-function getFilterValue(filters: RequestGridFilters, columnId: RequestGridFilterKey) {
+function getFilterValue(
+  filters: RequestGridFilters,
+  columnId: RequestGridFilterKey,
+) {
   switch (columnId) {
     case 'method':
       return filters.method
@@ -165,7 +168,11 @@ function collectSelectedRowIndexes(selection: GridSelection) {
   }
 
   const addRangeRows = (range: { y: number; height: number }) => {
-    for (let rowIndex = range.y; rowIndex < range.y + range.height; rowIndex += 1) {
+    for (
+      let rowIndex = range.y;
+      rowIndex < range.y + range.height;
+      rowIndex += 1
+    ) {
       rowIndexes.add(rowIndex)
     }
   }
@@ -201,7 +208,8 @@ export function RequestList({
 }: RequestListProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(readStoredWidths)
+  const [columnWidths, setColumnWidths] =
+    useState<Record<string, number>>(readStoredWidths)
   const [headerMenu, setHeaderMenu] = useState<{
     columnId: RequestGridFilterKey
     left: number
@@ -213,6 +221,7 @@ export function RequestList({
     left: number
     top: number
   } | null>(null)
+  const headerInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     window.localStorage.setItem(
@@ -252,13 +261,12 @@ export function RequestList({
     () =>
       DEFAULT_COLUMNS.map((column) => ({
         id: column.id,
-        title:
-          `${column.title}${
-            FILTERABLE_COLUMNS.has(column.id as RequestGridFilterKey) &&
-            getFilterValue(filters, column.id as RequestGridFilterKey)
-              ? ' •'
-              : ''
-          }${sort?.key === column.id ? ` ${sort.direction === 'asc' ? '↑' : '↓'}` : ''}`,
+        title: `${column.title}${
+          FILTERABLE_COLUMNS.has(column.id as RequestGridFilterKey) &&
+          getFilterValue(filters, column.id as RequestGridFilterKey)
+            ? ' •'
+            : ''
+        }${sort?.key === column.id ? ` ${sort.direction === 'asc' ? '↑' : '↓'}` : ''}`,
         hasMenu: FILTERABLE_COLUMNS.has(column.id as RequestGridFilterKey),
         width: columnWidths[column.id] ?? column.width,
       })),
@@ -286,7 +294,10 @@ export function RequestList({
     return rows
   }, [rowIndexById, selectedIds])
 
-  const selectedRowSet = useMemo(() => new Set(selectedRows.toArray()), [selectedRows])
+  const selectedRowSet = useMemo(
+    () => new Set(selectedRows.toArray()),
+    [selectedRows],
+  )
 
   const gridSelection = useMemo<GridSelection>(
     () => ({
@@ -383,8 +394,13 @@ export function RequestList({
     }
   }
 
-  const handleHeaderMenuClick = (columnIndex: number, screenPosition: Rectangle) => {
-    const columnId = DEFAULT_COLUMNS[columnIndex]?.id as RequestGridFilterKey | undefined
+  const handleHeaderMenuClick = (
+    columnIndex: number,
+    screenPosition: Rectangle,
+  ) => {
+    const columnId = DEFAULT_COLUMNS[columnIndex]?.id as
+      | RequestGridFilterKey
+      | undefined
     if (!columnId || !FILTERABLE_COLUMNS.has(columnId)) {
       return
     }
@@ -444,7 +460,9 @@ export function RequestList({
           gridSelection={gridSelection}
           onGridSelectionChange={handleGridSelectionChange}
           onHeaderClicked={(columnIndex) => {
-            const nextKey = DEFAULT_COLUMNS[columnIndex]?.id as RequestGridSortKey | undefined
+            const nextKey = DEFAULT_COLUMNS[columnIndex]?.id as
+              | RequestGridSortKey
+              | undefined
             if (!nextKey) {
               return
             }
@@ -488,7 +506,9 @@ export function RequestList({
         />
 
         {requests.length === 0 && (
-          <div class="request-grid__empty">No requests match the current filters.</div>
+          <div class="request-grid__empty">
+            No requests match the current filters.
+          </div>
         )}
       </div>
 
@@ -528,12 +548,19 @@ export function RequestList({
             top: `${headerMenu.top}px`,
           }}
         >
-          <div class="grid-menu__title">Filter {DEFAULT_COLUMNS.find((column) => column.id === headerMenu.columnId)?.title}</div>
+          <div class="grid-menu__title">
+            Filter{' '}
+            {
+              DEFAULT_COLUMNS.find(
+                (column) => column.id === headerMenu.columnId,
+              )?.title
+            }
+          </div>
 
-          {(headerMenu.columnId === 'method' ||
-            headerMenu.columnId === 'status' ||
-            headerMenu.columnId === 'node' ||
-            headerMenu.columnId === 'state') ? (
+          {headerMenu.columnId === 'method' ||
+          headerMenu.columnId === 'status' ||
+          headerMenu.columnId === 'node' ||
+          headerMenu.columnId === 'state' ? (
             <select
               value={headerMenu.draft}
               onInput={(event) =>
@@ -578,7 +605,10 @@ export function RequestList({
             </select>
           ) : (
             <input
-              autoFocus
+              ref={(node) => {
+                headerInputRef.current = node
+                node?.focus()
+              }}
               value={headerMenu.draft}
               placeholder="Contains…"
               onInput={(event) =>
@@ -636,7 +666,9 @@ export function RequestList({
             top: `${rowMenu.top}px`,
           }}
         >
-          <div class="grid-menu__title">Captured {formatTimestamp(rowMenu.request.captured_at)}</div>
+          <div class="grid-menu__title">
+            Captured {formatTimestamp(rowMenu.request.captured_at)}
+          </div>
           <button
             type="button"
             class="button button--ghost"

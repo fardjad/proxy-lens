@@ -52,12 +52,16 @@ export function Histogram({
       <div class="histogram__meta">
         <div>
           <strong>Captured requests over time</strong>
-          <span>{points.length} buckets · {bucket}</span>
+          <span>
+            {points.length} buckets · {bucket}
+          </span>
         </div>
         <button
           type="button"
           class="button button--ghost"
-          disabled={!selectedRange.capturedAfter && !selectedRange.capturedBefore}
+          disabled={
+            !selectedRange.capturedAfter && !selectedRange.capturedBefore
+          }
           onClick={onClearRange}
         >
           Clear brush
@@ -77,13 +81,17 @@ export function Histogram({
           >
             {points.map((point, index) => {
               const x = index * 24
-              const barHeight = Math.max(8, (point.request_count / maxCount) * 132)
+              const barHeight = Math.max(
+                8,
+                (point.request_count / maxCount) * 132,
+              )
               const y = 156 - barHeight
               const inPreview =
                 previewRange !== null &&
                 index >= previewRange.start &&
                 index <= previewRange.end
-              const selected = inPreview || isIndexSelected(index, point, selectedRange)
+              const selected =
+                inPreview || isIndexSelected(index, point, selectedRange)
 
               return (
                 <g key={point.timestamp}>

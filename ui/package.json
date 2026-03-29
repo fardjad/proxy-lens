@@ -1,12 +1,14 @@
 {
   "name": "ui",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "style-check": "biome check src vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json package.json biome.json",
+    "style-fix": "biome check --write src vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json package.json biome.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -17,6 +19,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.5",
     "@preact/preset-vite": "^2.10.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/preact": "^3.2.4",

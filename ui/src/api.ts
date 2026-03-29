@@ -91,9 +91,12 @@ export async function deleteRequests(requestIds: string[]) {
   params.set('limit', String(Math.max(requestIds.length, 1)))
   params.set('offset', '0')
 
-  const response = await fetch(`${API_BASE_URL}/requests?${params.toString()}`, {
-    method: 'DELETE',
-  })
+  const response = await fetch(
+    `${API_BASE_URL}/requests?${params.toString()}`,
+    {
+      method: 'DELETE',
+    },
+  )
 
   if (!response.ok) {
     throw new Error(`Delete failed with ${response.status}`)

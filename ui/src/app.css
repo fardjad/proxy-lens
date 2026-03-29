@@ -76,7 +76,10 @@
 .workspace {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--splitter-size) minmax(320px, var(--sidebar-width, 420px));
+  grid-template-columns: minmax(0, 1fr) var(--splitter-size) minmax(
+      320px,
+      var(--sidebar-width, 420px)
+    );
   gap: 4px;
 }
 
@@ -94,7 +97,10 @@
 .workspace__main-body {
   min-height: 0;
   display: grid;
-  grid-template-rows: minmax(260px, 1fr) var(--splitter-size) minmax(180px, var(--diagram-height, 260px));
+  grid-template-rows: minmax(260px, 1fr) var(--splitter-size) minmax(
+      180px,
+      var(--diagram-height, 260px)
+    );
   gap: 4px;
 }
 
@@ -645,7 +651,7 @@ select:focus {
 }
 
 .splitter::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
 }

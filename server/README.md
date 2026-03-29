@@ -2,6 +2,9 @@
 
 Implementation of the ProxyLens Server spec.
 
+This project is kept in-repo and is not published to PyPI by the repository's
+release workflow.
+
 ## Running the server
 
 Use the package entry point:

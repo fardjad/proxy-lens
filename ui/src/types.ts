@@ -108,9 +108,7 @@ export type LoadState<T> =
   | { status: 'ready'; data: T }
   | { status: 'error'; error: string }
 
-export type BodyPreview =
-  | { kind: 'text'; text: string }
-  | { kind: 'binary' }
+export type BodyPreview = { kind: 'text'; text: string } | { kind: 'binary' }
 
 export type BodyState =
   | { status: 'idle' }

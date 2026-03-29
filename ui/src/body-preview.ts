@@ -31,7 +31,8 @@ export function decodeBodyPreview(
   bytes: Uint8Array,
   contentType: string | null | undefined,
 ): BodyPreview {
-  const shouldTryUtf8 = isTextLikeContentType(contentType) || bytes.length < 4_096
+  const shouldTryUtf8 =
+    isTextLikeContentType(contentType) || bytes.length < 4_096
 
   if (!shouldTryUtf8) {
     return { kind: 'binary' }

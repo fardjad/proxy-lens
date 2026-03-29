@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import type { JSX } from 'preact'
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import './app.css'
 import {
   deleteRequests,
@@ -12,12 +12,18 @@ import {
 import { decodeBodyPreview } from './body-preview'
 import { DetailsSidebar } from './components/details-sidebar'
 import {
-  RequestList,
   type RequestGridFilters,
   type RequestGridSort,
+  RequestList,
 } from './components/request-list'
 import { SequenceDiagram } from './components/sequence-diagram'
-import type { BodyState, DiagramMode, LoadState, RequestDetail, RequestSummary } from './types'
+import type {
+  BodyState,
+  DiagramMode,
+  LoadState,
+  RequestDetail,
+  RequestSummary,
+} from './types'
 import {
   DEFAULT_FILTERS,
   filterRequestsByTimeShortcutAnchor,
@@ -27,8 +33,8 @@ import {
   intersectSelection,
   requestDisplayUrl,
   sortRequestsChronologically,
-  toggleSelection,
   type TimeShortcutAnchor,
+  toggleSelection,
 } from './utils'
 
 const SEARCH_FIELDS = ['url', 'trace', 'request'] as const
@@ -183,7 +189,8 @@ function isTimeShortcutAnchor(value: unknown): value is TimeShortcutAnchor {
 
   const candidate = value as Record<string, unknown>
   return (
-    (candidate.boundary === 'hide-before' || candidate.boundary === 'hide-after') &&
+    (candidate.boundary === 'hide-before' ||
+      candidate.boundary === 'hide-after') &&
     typeof candidate.requestId === 'string'
   )
 }
@@ -217,12 +224,7 @@ function toInclusiveIsoTimestamp(value: string, edge: 'after' | 'before') {
   }
 
   const ms = date.getTime()
-  const adjustment =
-    value.includes('.')
-      ? 1
-      : edge === 'after'
-        ? 1
-        : 999
+  const adjustment = value.includes('.') ? 1 : edge === 'after' ? 1 : 999
   return new Date(edge === 'after' ? ms - 1 : ms + adjustment).toISOString()
 }
 
@@ -237,21 +239,36 @@ export function App() {
     readStoredText('proxylens.searchQuery', ''),
   )
   const [gridFilters, setGridFilters] = useState<RequestGridFilters>(() =>
-    readStoredJson('proxylens.gridFilters', DEFAULT_GRID_FILTERS, isGridFilters),
+    readStoredJson(
+      'proxylens.gridFilters',
+      DEFAULT_GRID_FILTERS,
+      isGridFilters,
+    ),
   )
   const [gridSort, setGridSort] = useState<RequestGridSort | null>(() =>
-    readStoredJson('proxylens.gridSort', null, (value): value is RequestGridSort | null =>
-      value === null || isGridSort(value),
+    readStoredJson(
+      'proxylens.gridSort',
+      null,
+      (value): value is RequestGridSort | null =>
+        value === null || isGridSort(value),
     ),
   )
   const [timeFilters, setTimeFilters] = useState<TimeFilters>(() =>
-    readStoredJson('proxylens.timeFilters', DEFAULT_TIME_FILTERS, isTimeFilters),
-  )
-  const [timeShortcutAnchor, setTimeShortcutAnchor] = useState<TimeShortcutAnchor | null>(() =>
-    readStoredJson('proxylens.timeShortcutAnchor', null, (value): value is TimeShortcutAnchor | null =>
-      value === null || isTimeShortcutAnchor(value),
+    readStoredJson(
+      'proxylens.timeFilters',
+      DEFAULT_TIME_FILTERS,
+      isTimeFilters,
     ),
   )
+  const [timeShortcutAnchor, setTimeShortcutAnchor] =
+    useState<TimeShortcutAnchor | null>(() =>
+      readStoredJson(
+        'proxylens.timeShortcutAnchor',
+        null,
+        (value): value is TimeShortcutAnchor | null =>
+          value === null || isTimeShortcutAnchor(value),
+      ),
+    )
   const [diagramMode, setDiagramMode] = useState<DiagramMode>('grouped')
   const [currentPage, setCurrentPage] = useState(() =>
     Math.max(0, Math.floor(readStoredSize('proxylens.currentPage', 0))),
@@ -262,20 +279,26 @@ export function App() {
   const [sidebarWidth, setSidebarWidth] = useState(() =>
     readStoredSize('proxylens.sidebarWidth', DEFAULT_SIDEBAR_WIDTH),
   )
-  const [sidebarHidden, setSidebarHidden] = useState(() =>
-    readStoredSize('proxylens.sidebarHidden', 0) === 1,
+  const [sidebarHidden, setSidebarHidden] = useState(
+    () => readStoredSize('proxylens.sidebarHidden', 0) === 1,
   )
   const [diagramHeight, setDiagramHeight] = useState(() =>
     readStoredSize('proxylens.diagramHeight', DEFAULT_DIAGRAM_HEIGHT),
   )
-  const [requestsState, setRequestsState] = useState<LoadState<RequestSummary[]>>({
+  const [requestsState, setRequestsState] = useState<
+    LoadState<RequestSummary[]>
+  >({
     status: 'loading',
   })
   const [detailState, setDetailState] = useState<LoadState<RequestDetail>>({
     status: 'idle',
   })
-  const [requestBodyState, setRequestBodyState] = useState<BodyState>({ status: 'idle' })
-  const [responseBodyState, setResponseBodyState] = useState<BodyState>({ status: 'idle' })
+  const [requestBodyState, setRequestBodyState] = useState<BodyState>({
+    status: 'idle',
+  })
+  const [responseBodyState, setResponseBodyState] = useState<BodyState>({
+    status: 'idle',
+  })
   const [refreshTick, setRefreshTick] = useState(0)
 
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 250)
@@ -289,7 +312,10 @@ export function App() {
   }, [searchQuery])
 
   useEffect(() => {
-    window.localStorage.setItem('proxylens.gridFilters', JSON.stringify(gridFilters))
+    window.localStorage.setItem(
+      'proxylens.gridFilters',
+      JSON.stringify(gridFilters),
+    )
   }, [gridFilters])
 
   useEffect(() => {
@@ -297,7 +323,10 @@ export function App() {
   }, [gridSort])
 
   useEffect(() => {
-    window.localStorage.setItem('proxylens.timeFilters', JSON.stringify(timeFilters))
+    window.localStorage.setItem(
+      'proxylens.timeFilters',
+      JSON.stringify(timeFilters),
+    )
   }, [timeFilters])
 
   useEffect(() => {
@@ -312,19 +341,31 @@ export function App() {
   }, [currentPage])
 
   useEffect(() => {
-    window.localStorage.setItem('proxylens.selectedIds', JSON.stringify(selectedIds))
+    window.localStorage.setItem(
+      'proxylens.selectedIds',
+      JSON.stringify(selectedIds),
+    )
   }, [selectedIds])
 
   useEffect(() => {
-    window.localStorage.setItem('proxylens.sidebarWidth', `${Math.round(sidebarWidth)}`)
+    window.localStorage.setItem(
+      'proxylens.sidebarWidth',
+      `${Math.round(sidebarWidth)}`,
+    )
   }, [sidebarWidth])
 
   useEffect(() => {
-    window.localStorage.setItem('proxylens.sidebarHidden', sidebarHidden ? '1' : '0')
+    window.localStorage.setItem(
+      'proxylens.sidebarHidden',
+      sidebarHidden ? '1' : '0',
+    )
   }, [sidebarHidden])
 
   useEffect(() => {
-    window.localStorage.setItem('proxylens.diagramHeight', `${Math.round(diagramHeight)}`)
+    window.localStorage.setItem(
+      'proxylens.diagramHeight',
+      `${Math.round(diagramHeight)}`,
+    )
   }, [diagramHeight])
 
   useEffect(() => {
@@ -335,7 +376,9 @@ export function App() {
           MIN_SIDEBAR_WIDTH,
           workspaceRect.width - MIN_MAIN_WIDTH - SPLITTER_SIZE,
         )
-        setSidebarWidth((current) => clamp(current, MIN_SIDEBAR_WIDTH, maxSidebarWidth))
+        setSidebarWidth((current) =>
+          clamp(current, MIN_SIDEBAR_WIDTH, maxSidebarWidth),
+        )
       }
 
       const mainBodyRect = mainBodyRef.current?.getBoundingClientRect()
@@ -344,7 +387,9 @@ export function App() {
           MIN_DIAGRAM_HEIGHT,
           mainBodyRect.height - MIN_LIST_HEIGHT - SPLITTER_SIZE,
         )
-        setDiagramHeight((current) => clamp(current, MIN_DIAGRAM_HEIGHT, maxDiagramHeight))
+        setDiagramHeight((current) =>
+          clamp(current, MIN_DIAGRAM_HEIGHT, maxDiagramHeight),
+        )
       }
     }
 
@@ -356,8 +401,14 @@ export function App() {
   const effectiveFilters = useMemo(
     () => ({
       ...DEFAULT_FILTERS,
-      capturedAfter: toInclusiveIsoTimestamp(timeFilters.capturedAfter, 'after'),
-      capturedBefore: toInclusiveIsoTimestamp(timeFilters.capturedBefore, 'before'),
+      capturedAfter: toInclusiveIsoTimestamp(
+        timeFilters.capturedAfter,
+        'after',
+      ),
+      capturedBefore: toInclusiveIsoTimestamp(
+        timeFilters.capturedBefore,
+        'before',
+      ),
       urlContains: searchField === 'url' ? debouncedSearchQuery.trim() : '',
       traceIds:
         searchField === 'trace'
@@ -378,6 +429,7 @@ export function App() {
   )
 
   useEffect(() => {
+    void refreshTick
     let cancelled = false
     setRequestsState({ status: 'loading' })
 
@@ -400,7 +452,10 @@ export function App() {
         if (!cancelled) {
           setRequestsState({
             status: 'error',
-            error: error instanceof Error ? error.message : 'Failed to load requests',
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to load requests',
           })
         }
       })
@@ -410,10 +465,7 @@ export function App() {
     }
   }, [effectiveFilters, refreshTick])
 
-  const requests =
-    requestsState.status === 'ready'
-      ? requestsState.data
-      : []
+  const requests = requestsState.status === 'ready' ? requestsState.data : []
 
   const anchoredRequests = useMemo(
     () => filterRequestsByTimeShortcutAnchor(requests, timeShortcutAnchor),
@@ -443,21 +495,27 @@ export function App() {
 
       if (
         gridFilters.url &&
-        !requestDisplayUrl(request).toLowerCase().includes(gridFilters.url.toLowerCase())
+        !requestDisplayUrl(request)
+          .toLowerCase()
+          .includes(gridFilters.url.toLowerCase())
       ) {
         return false
       }
 
       if (
         gridFilters.trace &&
-        !request.trace_id.toLowerCase().includes(gridFilters.trace.toLowerCase())
+        !request.trace_id
+          .toLowerCase()
+          .includes(gridFilters.trace.toLowerCase())
       ) {
         return false
       }
 
       if (
         gridFilters.request &&
-        !request.request_id.toLowerCase().includes(gridFilters.request.toLowerCase())
+        !request.request_id
+          .toLowerCase()
+          .includes(gridFilters.request.toLowerCase())
       ) {
         return false
       }
@@ -475,25 +533,44 @@ export function App() {
 
       switch (gridSort.key) {
         case 'method':
-          return direction * (left.request_method ?? '').localeCompare(right.request_method ?? '')
+          return (
+            direction *
+            (left.request_method ?? '').localeCompare(
+              right.request_method ?? '',
+            )
+          )
         case 'status':
-          return direction * ((left.response_status_code ?? -1) - (right.response_status_code ?? -1))
+          return (
+            direction *
+            ((left.response_status_code ?? -1) -
+              (right.response_status_code ?? -1))
+          )
         case 'node':
           return direction * left.node_name.localeCompare(right.node_name)
         case 'state':
-          return direction * formatRequestState(getRequestState(left)).localeCompare(
-            formatRequestState(getRequestState(right)),
+          return (
+            direction *
+            formatRequestState(getRequestState(left)).localeCompare(
+              formatRequestState(getRequestState(right)),
+            )
           )
         case 'url':
-          return direction * requestDisplayUrl(left).localeCompare(requestDisplayUrl(right))
+          return (
+            direction *
+            requestDisplayUrl(left).localeCompare(requestDisplayUrl(right))
+          )
         case 'trace':
           return direction * left.trace_id.localeCompare(right.trace_id)
         case 'request':
           return direction * left.request_id.localeCompare(right.request_id)
         case 'captured':
-          return direction * (
-            new Date(left.captured_at).getTime() - new Date(right.captured_at).getTime()
+          return (
+            direction *
+            (new Date(left.captured_at).getTime() -
+              new Date(right.captured_at).getTime())
           )
+        default:
+          return 0
       }
     })
 
@@ -524,12 +601,15 @@ export function App() {
 
     return {
       methods: [...methods].sort(),
-      statuses: [...statuses].sort((left, right) => Number(left) - Number(right)),
+      statuses: [...statuses].sort(
+        (left, right) => Number(left) - Number(right),
+      ),
       nodes: [...nodes].sort(),
     }
   }, [requests])
 
-  const selectedRequestId = selectedIds.length === 1 ? selectedIds[0] : undefined
+  const selectedRequestId =
+    selectedIds.length === 1 ? selectedIds[0] : undefined
 
   useEffect(() => {
     setCurrentPage((current) => clamp(current, 0, totalPages - 1))
@@ -580,7 +660,10 @@ export function App() {
           setRequestBodyState({
             status: 'ready',
             data: requestBody,
-            preview: decodeBodyPreview(requestBody.bytes, requestBody.contentType),
+            preview: decodeBodyPreview(
+              requestBody.bytes,
+              requestBody.contentType,
+            ),
           })
         }
 
@@ -590,14 +673,19 @@ export function App() {
           setResponseBodyState({
             status: 'ready',
             data: responseBody,
-            preview: decodeBodyPreview(responseBody.bytes, responseBody.contentType),
+            preview: decodeBodyPreview(
+              responseBody.bytes,
+              responseBody.contentType,
+            ),
           })
         }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
           const message =
-            error instanceof Error ? error.message : 'Failed to load request detail'
+            error instanceof Error
+              ? error.message
+              : 'Failed to load request detail'
           setDetailState({ status: 'error', error: message })
           setRequestBodyState({ status: 'error', error: message })
           setResponseBodyState({ status: 'error', error: message })
@@ -638,8 +726,10 @@ export function App() {
 
     setTimeFilters((current) => ({
       ...current,
-      capturedAfter: boundary === 'hide-before' ? timestamp : current.capturedAfter,
-      capturedBefore: boundary === 'hide-after' ? timestamp : current.capturedBefore,
+      capturedAfter:
+        boundary === 'hide-before' ? timestamp : current.capturedAfter,
+      capturedBefore:
+        boundary === 'hide-after' ? timestamp : current.capturedBefore,
     }))
     setTimeShortcutAnchor({
       boundary,
@@ -655,7 +745,10 @@ export function App() {
   }
 
   function startSidebarResize(event: JSX.TargetedPointerEvent<HTMLDivElement>) {
-    if (window.matchMedia('(max-width: 1180px)').matches || !workspaceRef.current) {
+    if (
+      window.matchMedia('(max-width: 1180px)').matches ||
+      !workspaceRef.current
+    ) {
       return
     }
 
@@ -675,7 +768,9 @@ export function App() {
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const delta = startX - moveEvent.clientX
-      setSidebarWidth(clamp(startSidebar + delta, MIN_SIDEBAR_WIDTH, maxSidebarWidth))
+      setSidebarWidth(
+        clamp(startSidebar + delta, MIN_SIDEBAR_WIDTH, maxSidebarWidth),
+      )
     }
 
     const stopResize = () => {
@@ -692,7 +787,10 @@ export function App() {
   }
 
   function startDiagramResize(event: JSX.TargetedPointerEvent<HTMLDivElement>) {
-    if (window.matchMedia('(max-width: 1180px)').matches || !mainBodyRef.current) {
+    if (
+      window.matchMedia('(max-width: 1180px)').matches ||
+      !mainBodyRef.current
+    ) {
       return
     }
 
@@ -712,7 +810,9 @@ export function App() {
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const delta = moveEvent.clientY - startY
-      setDiagramHeight(clamp(startHeight - delta, MIN_DIAGRAM_HEIGHT, maxDiagramHeight))
+      setDiagramHeight(
+        clamp(startHeight - delta, MIN_DIAGRAM_HEIGHT, maxDiagramHeight),
+      )
     }
 
     const stopResize = () => {
@@ -748,8 +848,12 @@ export function App() {
           class="button button--ghost shell__header-toggle"
           onClick={() => setSidebarHidden((current) => !current)}
           aria-expanded={!sidebarHidden}
-          aria-label={sidebarHidden ? 'Show details sidebar' : 'Hide details sidebar'}
-          title={sidebarHidden ? 'Show details sidebar' : 'Hide details sidebar'}
+          aria-label={
+            sidebarHidden ? 'Show details sidebar' : 'Hide details sidebar'
+          }
+          title={
+            sidebarHidden ? 'Show details sidebar' : 'Hide details sidebar'
+          }
         >
           {sidebarHidden ? '>' : '<'}
         </button>
@@ -766,7 +870,10 @@ export function App() {
               aria-label="Search field"
               value={searchField}
               onInput={(event) => {
-                setSearchField((event.currentTarget as HTMLSelectElement).value as SearchField)
+                setSearchField(
+                  (event.currentTarget as HTMLSelectElement)
+                    .value as SearchField,
+                )
                 setCurrentPage(0)
               }}
             >
@@ -815,7 +922,8 @@ export function App() {
                 onInput={(event) => {
                   setTimeFilters((current) => ({
                     ...current,
-                    capturedAfter: (event.currentTarget as HTMLInputElement).value,
+                    capturedAfter: (event.currentTarget as HTMLInputElement)
+                      .value,
                   }))
                   setTimeShortcutAnchor(null)
                   setCurrentPage(0)
@@ -831,7 +939,8 @@ export function App() {
                 onInput={(event) => {
                   setTimeFilters((current) => ({
                     ...current,
-                    capturedBefore: (event.currentTarget as HTMLInputElement).value,
+                    capturedBefore: (event.currentTarget as HTMLInputElement)
+                      .value,
                   }))
                   setTimeShortcutAnchor(null)
                   setCurrentPage(0)
@@ -851,10 +960,18 @@ export function App() {
             </button>
           </section>
 
-          <div class="workspace__main-body" ref={mainBodyRef} style={mainBodyStyle}>
+          <div
+            class="workspace__main-body"
+            ref={mainBodyRef}
+            style={mainBodyStyle}
+          >
             <section class="panel panel--list">
-              {requestsState.status === 'loading' && <div class="panel-empty">Loading requests…</div>}
-              {requestsState.status === 'error' && <div class="panel-empty">{requestsState.error}</div>}
+              {requestsState.status === 'loading' && (
+                <div class="panel-empty">Loading requests…</div>
+              )}
+              {requestsState.status === 'error' && (
+                <div class="panel-empty">{requestsState.error}</div>
+              )}
               {requestsState.status === 'ready' && (
                 <RequestList
                   requests={pagedRequests}
@@ -882,11 +999,14 @@ export function App() {
               )}
             </section>
 
-            <div
+            <hr
               class="splitter splitter--horizontal"
-              role="separator"
               aria-label="Resize request list and diagram"
               aria-orientation="horizontal"
+              aria-valuemin={180}
+              aria-valuemax={640}
+              aria-valuenow={Math.round(diagramHeight)}
+              tabIndex={0}
               onPointerDown={startDiagramResize}
             />
 
@@ -903,11 +1023,14 @@ export function App() {
         </section>
 
         {!sidebarHidden && (
-          <div
+          <hr
             class="splitter splitter--vertical"
-            role="separator"
             aria-label="Resize main workspace and details"
             aria-orientation="vertical"
+            aria-valuemin={320}
+            aria-valuemax={720}
+            aria-valuenow={Math.round(sidebarWidth)}
+            tabIndex={0}
             onPointerDown={startSidebarResize}
           />
         )}
@@ -926,7 +1049,10 @@ export function App() {
       <footer class="shell__footer">
         <span>Server target: {getServerTarget()}</span>
         <span>{formatCount(filteredRequests.length)} visible</span>
-        <span>Page {filteredRequests.length === 0 ? 0 : currentPageClamped + 1} / {totalPages}</span>
+        <span>
+          Page {filteredRequests.length === 0 ? 0 : currentPageClamped + 1} /{' '}
+          {totalPages}
+        </span>
         <span>{selectedIds.length} selected</span>
         <button
           type="button"

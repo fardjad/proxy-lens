@@ -45,7 +45,9 @@ The repository is split by responsibility rather than by one monolithic app.
 
 ## Repository Notes
 
-- The top-level [`justfile`](justfile) only
-  wraps build and publish workflows for the two Python packages.
+- The top-level [`justfile`](justfile) wraps the PyPI release workflow for
+  [`mitmproxy_addon/`](mitmproxy_addon/) only.
+- [`server/`](server/) remains an in-repo project with its own local build and
+  test commands, but it is not part of the PyPI release flow.
 - Setup, run, and test commands live with each subproject and should be treated
   as the source of truth for that subproject.

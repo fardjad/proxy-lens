@@ -12,7 +12,10 @@ describe('decodeBodyPreview', () => {
   })
 
   it('marks undecodable binary bodies for download', () => {
-    const result = decodeBodyPreview(new Uint8Array([0xff, 0xd8, 0xff, 0x00]), 'image/jpeg')
+    const result = decodeBodyPreview(
+      new Uint8Array([0xff, 0xd8, 0xff, 0x00]),
+      'image/jpeg',
+    )
 
     expect(result).toEqual({ kind: 'binary' })
   })

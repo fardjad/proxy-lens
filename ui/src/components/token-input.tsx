@@ -86,7 +86,11 @@ export function TokenInput({
         </div>
         <button
           type="button"
-          class={classNames('button', 'button--ghost', !draft && 'button--muted')}
+          class={classNames(
+            'button',
+            'button--ghost',
+            !draft && 'button--muted',
+          )}
           onClick={() => commitToken(draft)}
         >
           Add

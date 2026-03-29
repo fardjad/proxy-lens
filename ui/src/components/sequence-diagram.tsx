@@ -1,7 +1,7 @@
-import { useRef, useState } from 'preact/hooks'
 import type { JSX } from 'preact'
-import type { DiagramMode, RequestSummary } from '../types'
+import { useRef, useState } from 'preact/hooks'
 import { buildSequenceDiagramModel, ORIGIN_COLUMN } from '../diagram'
+import type { DiagramMode, RequestSummary } from '../types'
 import { classNames, compactId } from '../utils'
 
 interface SequenceDiagramProps {
@@ -75,7 +75,9 @@ export function SequenceDiagram({
     })
   }
 
-  const handlePointerDown = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
+  const handlePointerDown = (
+    event: JSX.TargetedPointerEvent<HTMLDivElement>,
+  ) => {
     if (event.button !== 0) {
       return
     }
@@ -101,15 +103,19 @@ export function SequenceDiagram({
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
-  const handlePointerMove = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
+  const handlePointerMove = (
+    event: JSX.TargetedPointerEvent<HTMLDivElement>,
+  ) => {
     const panState = panRef.current
     const viewport = viewportRef.current
     if (!panState || !viewport || panState.pointerId !== event.pointerId) {
       return
     }
 
-    viewport.scrollLeft = panState.startScrollLeft - (event.clientX - panState.startX)
-    viewport.scrollTop = panState.startScrollTop - (event.clientY - panState.startY)
+    viewport.scrollLeft =
+      panState.startScrollLeft - (event.clientX - panState.startX)
+    viewport.scrollTop =
+      panState.startScrollTop - (event.clientY - panState.startY)
   }
 
   const stopPanning = (event: JSX.TargetedPointerEvent<HTMLDivElement>) => {
@@ -206,14 +212,20 @@ export function SequenceDiagram({
           <div class="segmented">
             <button
               type="button"
-              class={classNames('segmented__option', mode === 'grouped' && 'is-active')}
+              class={classNames(
+                'segmented__option',
+                mode === 'grouped' && 'is-active',
+              )}
               onClick={() => onModeChange('grouped')}
             >
               Grouped
             </button>
             <button
               type="button"
-              class={classNames('segmented__option', mode === 'flat' && 'is-active')}
+              class={classNames(
+                'segmented__option',
+                mode === 'flat' && 'is-active',
+              )}
               onClick={() => onModeChange('flat')}
             >
               Flat
@@ -244,14 +256,20 @@ export function SequenceDiagram({
             height={height}
             class="diagram__svg"
             role="img"
+            aria-label="Request sequence diagram"
             style={{
               transform: `scale(${zoom})`,
               transformOrigin: 'top left',
             }}
           >
+            <title>Request sequence diagram</title>
             {model.columns.map((column) => (
               <g key={column}>
-                <text x={columnX.get(column)} y="24" class="diagram__column-label">
+                <text
+                  x={columnX.get(column)}
+                  y="24"
+                  class="diagram__column-label"
+                >
                   {column === ORIGIN_COLUMN ? 'origin' : column}
                 </text>
                 <line
@@ -269,8 +287,14 @@ export function SequenceDiagram({
 
               if (row.kind === 'group') {
                 return (
-                  <g key={`group-${row.traceId}-${index}`}>
-                    <rect x="20" y={y - 26} width={width - 40} height="32" class="diagram__group-bg" />
+                  <g key={row.traceId}>
+                    <rect
+                      x="20"
+                      y={y - 26}
+                      width={width - 40}
+                      height="32"
+                      class="diagram__group-bg"
+                    />
                     <text x="32" y={y - 6} class="diagram__group-label">
                       Trace {compactId(row.traceId, 10, 6)}
                     </text>
@@ -286,28 +310,54 @@ export function SequenceDiagram({
               return (
                 <g
                   key={row.request.request_id}
-                  class={classNames('diagram__request', isSelected && 'is-selected')}
+                  class={classNames(
+                    'diagram__request',
+                    isSelected && 'is-selected',
+                  )}
                 >
-                  <line
-                    x1={fromX}
-                    x2={toX}
-                    y1={y}
-                    y2={y}
-                    class="diagram__request-hitbox"
-                    onClick={() => onToggleRequest(row.request.request_id)}
-                  />
-                  <line
-                    x1={fromX}
-                    x2={toX}
-                    y1={y}
-                    y2={y}
-                    class="diagram__request-line"
-                  />
-                  <circle cx={fromX} cy={y} r="5" class="diagram__request-node" />
-                  <circle cx={toX} cy={y} r="5" class="diagram__request-node" />
-                  <text x={labelX} y={y - 12} textAnchor="middle" class="diagram__request-label">
-                    {row.label}
-                  </text>
+                  <a
+                    href={`#request-${row.request.request_id}`}
+                    aria-label={`Toggle request ${compactId(row.request.request_id)}`}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      onToggleRequest(row.request.request_id)
+                    }}
+                  >
+                    <line
+                      x1={fromX}
+                      x2={toX}
+                      y1={y}
+                      y2={y}
+                      class="diagram__request-hitbox"
+                    />
+                    <line
+                      x1={fromX}
+                      x2={toX}
+                      y1={y}
+                      y2={y}
+                      class="diagram__request-line"
+                    />
+                    <circle
+                      cx={fromX}
+                      cy={y}
+                      r="5"
+                      class="diagram__request-node"
+                    />
+                    <circle
+                      cx={toX}
+                      cy={y}
+                      r="5"
+                      class="diagram__request-node"
+                    />
+                    <text
+                      x={labelX}
+                      y={y - 12}
+                      textAnchor="middle"
+                      class="diagram__request-label"
+                    >
+                      {row.label}
+                    </text>
+                  </a>
                 </g>
               )
             })}

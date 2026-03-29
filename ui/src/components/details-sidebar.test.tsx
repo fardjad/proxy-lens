@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/preact'
 import { describe, expect, it } from 'vitest'
-import { DetailsSidebar } from './details-sidebar'
 import type { RequestDetail } from '../types'
+import { DetailsSidebar } from './details-sidebar'
 
 const detail: RequestDetail = {
   request_id: 'req-1',
@@ -55,7 +55,9 @@ describe('DetailsSidebar', () => {
     )
 
     expect(
-      screen.getByText(/select a request from the list or the sequence diagram/i),
+      screen.getByText(
+        /select a request from the list or the sequence diagram/i,
+      ),
     ).toBeInTheDocument()
   })
 
