@@ -130,3 +130,17 @@ def test_end_to_end_http_flow_and_queries(tmp_path: Path) -> None:
             client.post("/events", json={"events": [batch["events"][0]]}).status_code
             == 409
         )
+
+
+def test_server_allows_local_ui_origin_via_cors(tmp_path: Path) -> None:
+    with TestClient(create_app(ServerConfig(data_dir=tmp_path))) as client:
+        response = client.options(
+            "/requests",
+            headers={
+                "Origin": "http://127.0.0.1:3000",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "*"

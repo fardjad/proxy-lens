@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from proxylens_server._version import __version__
 from proxylens_server.bootstrap import AppContainer, create_container
@@ -30,11 +31,11 @@ def _default_data_dir() -> Path:
 
 
 def create_app(config: ServerConfig | None = None) -> FastAPI:
+    resolved_config = config or ServerConfig(data_dir=_default_data_dir())
+
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        app.state.container = create_container(
-            config or ServerConfig(data_dir=_default_data_dir())
-        )
+        app.state.container = create_container(resolved_config)
         try:
             yield
         finally:
@@ -46,6 +47,14 @@ def create_app(config: ServerConfig | None = None) -> FastAPI:
         docs_url=None,
         redoc_url=None,
         lifespan=lifespan,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     def get_container() -> AppContainer:
