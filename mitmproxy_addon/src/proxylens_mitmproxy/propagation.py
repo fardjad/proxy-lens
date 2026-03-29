@@ -163,6 +163,15 @@ def build_propagation_state(
     )
 
 
+def resolve_outbound_propagator(*, trace_id: str, propagator: str | None) -> str | None:
+    if propagator is not None:
+        return propagator
+    normalized_trace_id = _normalize_trace_id(trace_id)
+    if normalized_trace_id is not None and len(normalized_trace_id) == 32:
+        return "w3c"
+    return None
+
+
 def synchronize_trace_context_headers(
     headers: MutableMapping[str, str],
     *,

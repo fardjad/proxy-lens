@@ -4,10 +4,6 @@
 
 :8443 {
 	tls /certs/localhost.crt /certs/localhost.key
-	tracing {
-		span caddy-app2
-	}
-
 	reverse_proxy https://app2:9443 {
 		transport http {
 			tls_insecure_skip_verify

@@ -7,6 +7,7 @@ It does three main things:
 
 - propagates `X-ProxyLens-HopChain`
 - generates a fresh `X-ProxyLens-RequestId` per observed hop
+- synchronizes standard W3C, B3, or Jaeger trace headers, and synthesizes W3C context for fresh 32-hex traces when no standard context arrived inbound
 - submits request, response, body, trailer, websocket, and error events to a server client
 
 It can also optionally limit how many requests are allowed through the proxy at
@@ -111,10 +112,12 @@ uv run mitmdump -s run_proxylens_mitmproxy.py
 For each request seen by the current mitmproxy process, the addon:
 
 1. reads any inbound `X-ProxyLens-HopChain`
-2. appends the current node name or starts a new trace using a trace id extracted from `traceparent`, B3, or Jaeger headers when available
+2. appends the current node name or starts a new trace using a trace id extracted from `traceparent`, B3, or Jaeger headers when available, otherwise generating a new trace id
 3. replaces any inbound `X-ProxyLens-RequestId` with a fresh ULID
-4. emits normalized capture events in request-local `event_index` order
-5. uploads binary body chunks and binary websocket payloads before emitting referencing events
+4. preserves the inbound standard propagation format when W3C, B3, or Jaeger context is already present
+5. synthesizes W3C `traceparent` and `tracestate` when no standard trace context arrived inbound and the resolved trace id is 32 hex, so downstream OpenTelemetry instrumentation can join the same trace automatically
+6. emits normalized capture events in request-local `event_index` order
+7. uploads binary body chunks and binary websocket payloads before emitting referencing events
 
 The addon currently captures:
 

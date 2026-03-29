@@ -38,10 +38,12 @@ variables.
   localhost certificate and the proxy MITM CA before the app starts
 - `app3` is just the terminal Flask service and does not make a downstream call
 
-OpenTelemetry instrumentation is still responsible for propagating `traceparent`
-through the chain. Each Caddy instance also enables its own
-OpenTelemetry-compatible request tracing, so it can preserve an existing trace
-context or initialize one before the request reaches the addon.
+OpenTelemetry instrumentation still propagates `traceparent` through the chain
+when standard trace headers already exist. When a request reaches the first
+ProxyLens addon without `traceparent`, B3, or Jaeger headers, the addon now
+creates a new shared ProxyLens trace id and synthesizes W3C `traceparent` and
+`tracestate` before forwarding, so downstream OpenTelemetry instrumentation can
+join the same trace automatically.
 
 Because the ProxyLens addon now derives its shared trace id from standard trace
 propagation headers, the full `app1 -> app2 -> app3` request chain should be

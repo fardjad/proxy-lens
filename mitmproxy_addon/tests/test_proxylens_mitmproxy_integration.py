@@ -11,6 +11,8 @@ from proxylens_mitmproxy import (
 from proxylens_mitmproxy.propagation import (
     PROXYLENS_HOP_CHAIN_HEADER,
     PROXYLENS_REQUEST_ID_HEADER,
+    TRACEPARENT_HEADER,
+    TRACESTATE_HEADER,
 )
 
 
@@ -20,6 +22,7 @@ def test_missing_hop_chain_generates_new_trace_and_request_id() -> None:
         client=client,
         node_name="proxy-a",
         trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
+        span_id_generator=lambda: "aaaaaaaaaaaaaaaa",
         request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
         blob_id_generator=_blob_ids(),
     )
@@ -38,6 +41,11 @@ def test_missing_hop_chain_generates_new_trace_and_request_id() -> None:
         captured.request.headers[PROXYLENS_REQUEST_ID_HEADER]
         == "01K0REQUESTPROXYAEXAMPLE00"
     )
+    assert (
+        captured.request.headers[TRACEPARENT_HEADER]
+        == "00-4bf92f3577b34da6a3ce929d0e0e4736-aaaaaaaaaaaaaaaa-01"
+    )
+    assert captured.request.headers[TRACESTATE_HEADER] == "proxylens=cHJveHktYQ"
     assert client.events[0]["type"] == "http_request_started"
     assert (
         PROXYLENS_HOP_CHAIN_HEADER,
@@ -46,6 +54,13 @@ def test_missing_hop_chain_generates_new_trace_and_request_id() -> None:
     assert (PROXYLENS_REQUEST_ID_HEADER, "01K0REQUESTPROXYAEXAMPLE00") in client.events[
         0
     ]["payload"]["headers"]
+    assert (
+        TRACEPARENT_HEADER,
+        "00-4bf92f3577b34da6a3ce929d0e0e4736-aaaaaaaaaaaaaaaa-01",
+    ) in client.events[0]["payload"]["headers"]
+    assert (TRACESTATE_HEADER, "proxylens=cHJveHktYQ") in client.events[0]["payload"][
+        "headers"
+    ]
 
 
 def test_existing_hop_chain_is_preserved_and_appended_and_upstream_request_id_is_replaced() -> (

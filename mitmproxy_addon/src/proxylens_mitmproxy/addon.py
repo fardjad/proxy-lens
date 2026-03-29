@@ -38,6 +38,7 @@ from proxylens_mitmproxy.propagation import (
     generate_span_id,
     generate_trace_id,
     generate_ulid,
+    resolve_outbound_propagator,
     resolve_node_name,
     synchronize_trace_context_headers,
 )
@@ -255,11 +256,15 @@ class ProxyLens:
         )
         flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER] = propagation.hop_chain
         flow.request.headers[PROXYLENS_REQUEST_ID_HEADER] = propagation.request_id
+        outbound_propagator = resolve_outbound_propagator(
+            trace_id=propagation.trace_id,
+            propagator=propagation.propagator,
+        )
         synchronize_trace_context_headers(
             flow.request.headers,
             trace_id=propagation.trace_id,
             hop_nodes=propagation.hop_nodes,
-            propagator=propagation.propagator,
+            propagator=outbound_propagator,
             span_id_generator=self._span_id_generator,
         )
         flow.metadata[_STATE_KEY] = {

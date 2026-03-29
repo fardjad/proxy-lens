@@ -20,6 +20,7 @@ from proxylens_mitmproxy.propagation import (
     generate_trace_id,
     generate_ulid,
     parse_hop_chain,
+    resolve_outbound_propagator,
     resolve_node_name,
     synchronize_trace_context_headers,
 )
@@ -174,6 +175,26 @@ def test_synchronize_trace_context_headers_only_updates_w3c_headers_for_w3c_requ
     assert JAEGER_TRACE_CONTEXT_HEADER not in headers
 
 
+def test_synchronize_trace_context_headers_can_synthesize_w3c_headers() -> None:
+    headers: dict[str, str] = {}
+
+    synchronize_trace_context_headers(
+        headers,
+        trace_id="4bf92f3577b34da6a3ce929d0e0e4736",
+        hop_nodes=("proxy-a",),
+        propagator="w3c",
+        span_id_generator=lambda: "aaaaaaaaaaaaaaaa",
+    )
+
+    assert (
+        headers[TRACEPARENT_HEADER]
+        == "00-4bf92f3577b34da6a3ce929d0e0e4736-aaaaaaaaaaaaaaaa-01"
+    )
+    assert headers[TRACESTATE_HEADER] == "proxylens=cHJveHktYQ"
+    assert B3_HEADER not in headers
+    assert JAEGER_TRACE_CONTEXT_HEADER not in headers
+
+
 def test_synchronize_trace_context_headers_only_updates_b3_headers_for_b3_requests() -> (
     None
 ):
@@ -238,6 +259,26 @@ def test_synchronize_trace_context_headers_is_noop_without_detected_propagator()
     )
 
     assert headers == {}
+
+
+def test_resolve_outbound_propagator_defaults_to_w3c_for_32_hex_trace_ids() -> None:
+    assert (
+        resolve_outbound_propagator(
+            trace_id="4bf92f3577b34da6a3ce929d0e0e4736",
+            propagator=None,
+        )
+        == "w3c"
+    )
+
+
+def test_resolve_outbound_propagator_keeps_noop_for_non_w3c_trace_ids() -> None:
+    assert (
+        resolve_outbound_propagator(
+            trace_id="01K0TRACEPROXYAEXAMPLE0000",
+            propagator=None,
+        )
+        is None
+    )
 
 
 def test_parse_hop_chain_rejects_invalid_values() -> None:

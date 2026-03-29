@@ -10,8 +10,16 @@ from proxylens_mitmproxy.client import (
     RecordingProxyLensServerClient,
 )
 from proxylens_mitmproxy.propagation import (
+    B3_HEADER,
+    B3_HOP_NODES_HEADER,
+    B3_SPAN_ID_HEADER,
+    B3_TRACE_ID_HEADER,
+    JAEGER_HOP_NODES_HEADER,
+    JAEGER_TRACE_CONTEXT_HEADER,
     PROXYLENS_HOP_CHAIN_HEADER,
     PROXYLENS_REQUEST_ID_HEADER,
+    TRACEPARENT_HEADER,
+    TRACESTATE_HEADER,
 )
 
 
@@ -42,6 +50,8 @@ def test_requestheaders_mutates_trace_headers_and_submits_request_started() -> N
         flow.request.headers[PROXYLENS_REQUEST_ID_HEADER]
         == "01K0REQUESTPROXYAEXAMPLE00"
     )
+    assert TRACEPARENT_HEADER not in flow.request.headers
+    assert TRACESTATE_HEADER not in flow.request.headers
     assert client.events[0]["type"] == "http_request_started"
 
 
@@ -84,7 +94,116 @@ def test_requestheaders_reuses_traceparent_trace_id_when_hop_chain_is_missing() 
         flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER]
         == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a"
     )
+    assert (
+        flow.request.headers[TRACEPARENT_HEADER]
+        == "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+    )
+    assert flow.request.headers[TRACESTATE_HEADER] == "proxylens=cHJveHktYQ"
     assert client.events[0]["hop_chain"] == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a"
+
+
+def test_requestheaders_synthesizes_w3c_context_when_missing_standard_trace_headers() -> (
+    None
+):
+    client = RecordingProxyLensServerClient()
+    addon = ProxyLens(
+        client=client,
+        node_name="proxy-a",
+        trace_id_generator=lambda: "4bf92f3577b34da6a3ce929d0e0e4736",
+        span_id_generator=lambda: "aaaaaaaaaaaaaaaa",
+        request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
+    )
+    flow = tflow.tflow(
+        req=http.Request.make("GET", "https://example.test/widgets"),
+        resp=False,
+    )
+
+    addon.requestheaders(flow)
+
+    assert (
+        flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER]
+        == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a"
+    )
+    assert (
+        flow.request.headers[PROXYLENS_REQUEST_ID_HEADER]
+        == "01K0REQUESTPROXYAEXAMPLE00"
+    )
+    assert (
+        flow.request.headers[TRACEPARENT_HEADER]
+        == "00-4bf92f3577b34da6a3ce929d0e0e4736-aaaaaaaaaaaaaaaa-01"
+    )
+    assert flow.request.headers[TRACESTATE_HEADER] == "proxylens=cHJveHktYQ"
+    assert client.events[0]["hop_chain"] == "4bf92f3577b34da6a3ce929d0e0e4736@proxy-a"
+
+
+def test_requestheaders_preserves_existing_b3_synchronization() -> None:
+    client = RecordingProxyLensServerClient()
+    addon = ProxyLens(
+        client=client,
+        node_name="proxy-a",
+        trace_id_generator=lambda: "unused",
+        request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
+    )
+    flow = tflow.tflow(
+        req=http.Request.make(
+            "GET",
+            "https://example.test/widgets",
+            headers={
+                B3_HEADER: "a3ce929d0e0e4736-00f067aa0ba902b7-1",
+                B3_HOP_NODES_HEADER: "ZWRnZS1h",
+            },
+        ),
+        resp=False,
+    )
+
+    addon.requestheaders(flow)
+
+    assert (
+        flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER]
+        == "a3ce929d0e0e4736@edge-a,proxy-a"
+    )
+    assert flow.request.headers[B3_HEADER] == "a3ce929d0e0e4736-00f067aa0ba902b7-1"
+    assert flow.request.headers[B3_TRACE_ID_HEADER] == "a3ce929d0e0e4736"
+    assert flow.request.headers[B3_SPAN_ID_HEADER] == "00f067aa0ba902b7"
+    assert TRACEPARENT_HEADER not in flow.request.headers
+    assert JAEGER_TRACE_CONTEXT_HEADER not in flow.request.headers
+
+
+def test_requestheaders_preserves_existing_jaeger_synchronization() -> None:
+    client = RecordingProxyLensServerClient()
+    addon = ProxyLens(
+        client=client,
+        node_name="proxy-a",
+        trace_id_generator=lambda: "unused",
+        request_id_generator=lambda: "01K0REQUESTPROXYAEXAMPLE00",
+    )
+    flow = tflow.tflow(
+        req=http.Request.make(
+            "GET",
+            "https://example.test/widgets",
+            headers={
+                JAEGER_TRACE_CONTEXT_HEADER: (
+                    "4bf92f3577b34da6a3ce929d0e0e4736:00f067aa0ba902b7:0:1"
+                ),
+                JAEGER_HOP_NODES_HEADER: "ZWRnZS1h",
+            },
+        ),
+        resp=False,
+    )
+
+    addon.requestheaders(flow)
+
+    assert (
+        flow.request.headers[PROXYLENS_HOP_CHAIN_HEADER]
+        == "4bf92f3577b34da6a3ce929d0e0e4736@edge-a,proxy-a"
+    )
+    assert (
+        flow.request.headers[JAEGER_TRACE_CONTEXT_HEADER]
+        == "4bf92f3577b34da6a3ce929d0e0e4736:00f067aa0ba902b7:0:1"
+    )
+    assert flow.request.headers[JAEGER_HOP_NODES_HEADER] == "ZWRnZS1hLHByb3h5LWE"
+    assert TRACEPARENT_HEADER not in flow.request.headers
+    assert B3_HEADER not in flow.request.headers
 
 
 def test_stream_callback_submits_request_body_incrementally() -> None:

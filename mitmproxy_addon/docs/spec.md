@@ -305,10 +305,13 @@ X-ProxyLens-RequestId: 01K0REQUESTPROXYCHOP0000000
 
 Propagation behavior for HTTP requests:
 
-- if the hop-chain header is missing, generate a new trace id and set `X-ProxyLens-HopChain` to `<trace_id>@<current_node>`
+- if the hop-chain header is missing, derive the trace id from inbound `traceparent`, B3, or Jaeger headers when available, otherwise generate a new trace id, then set `X-ProxyLens-HopChain` to `<trace_id>@<current_node>`
 - if the trace header exists, parse it, preserve the shared trace id and existing node names, and append `<current_node>` to the node list
 - always generate a fresh request ULID for the request observed at the current hop and set `X-ProxyLens-RequestId`
 - do not preserve an inbound `X-ProxyLens-RequestId` value from an upstream hop
+- if inbound standard trace context exists, synchronize the outbound standard headers in that same family
+- if no inbound standard trace context exists and the resolved trace id is 32 hex, synthesize W3C `traceparent` and `tracestate` before forwarding so downstream OpenTelemetry-instrumented services can join the same trace
+- if no inbound standard trace context exists and the resolved trace id is not W3C-compatible, leave standard trace headers untouched
 - emit request metadata, body-chunk, trailer, and completion events keyed by the current hop's `request_id`
 - emit response metadata, body-chunk, trailer, and completion events keyed by the same `request_id`
 
@@ -773,6 +776,7 @@ The first implementation is complete when all of the following are true:
 - the spec and implementation intentionally target mitmproxy Regular mode
 - the default server client can resolve its base URL from `PROXYLENS_SERVER_BASE_URL`
 - at least one integration test proves that a missing `X-ProxyLens-HopChain` header creates a new hop-chain header value
+- at least one integration test proves that a missing standard trace context causes W3C `traceparent` and `tracestate` headers to be synthesized when the resolved trace id is 32 hex
 - at least one integration test proves that an existing `X-ProxyLens-HopChain` header is preserved and appended to
 - at least one integration test proves that a fresh `X-ProxyLens-RequestId` value is generated at the current hop
 - at least one integration test proves that an inbound `X-ProxyLens-RequestId` value is replaced at the current hop
@@ -799,3 +803,4 @@ The first implementation is complete when all of the following are true:
 7. `X-ProxyLens-RequestId` is a ULID generated fresh at each hop and used as the primary key for correlating capture events for one concrete request observed at that hop.
 8. mitmproxy Regular mode is the intentional support target for v1.
 9. V1 intentionally covers request and response metadata, body chunks, completion, trailers when exposed, WebSocket lifecycle, and WebSocket messages.
+10. When inbound standard trace context is absent, the addon should synthesize W3C trace context for resolved 32-hex trace ids so downstream OpenTelemetry clients can join the same end-to-end trace without a wrapper-specific override.
