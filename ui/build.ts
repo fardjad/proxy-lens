@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 
 const DEFAULT_SERVER_TARGET = 'http://127.0.0.1:8000'
 const proxyTarget =
@@ -34,4 +34,17 @@ const exitCode = await build.exited
 
 if (exitCode !== 0) {
   process.exit(exitCode)
+}
+
+const builtIndexPath = new URL('./dist/index.html', import.meta.url)
+const builtIndex = await readFile(builtIndexPath, 'utf8')
+
+if (!builtIndex.includes('./runtime-config.js')) {
+  await writeFile(
+    builtIndexPath,
+    builtIndex.replace(
+      '<div id="app"></div>',
+      '<div id="app"></div>\n    <script src="./runtime-config.js"></script>',
+    ),
+  )
 }

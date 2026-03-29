@@ -24,6 +24,12 @@ pre-commit-run *args='--all-files':
 sync-version *args='':
     env -u VIRTUAL_ENV uv run python hack/sync_version.py {{args}}
 
-# Publish the only Python distribution released to the selected package index.
-publish repository='pypi':
+# Publish the mitmproxy addon and optionally the runtime Docker image.
+publish repository='pypi' image='':
     just --justfile mitmproxy_addon/justfile --working-directory mitmproxy_addon publish {{repository}}
+    if [ -n "{{image}}" ]; then \
+        version="$$(tr -d '\n' < VERSION.txt)"; \
+        docker build -t "{{image}}:$${version}" -t "{{image}}:latest" .; \
+        docker push "{{image}}:$${version}"; \
+        docker push "{{image}}:latest"; \
+    fi
