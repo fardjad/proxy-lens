@@ -27,7 +27,7 @@ proxylens-server = "proxylens_server.cli:main"
 dev = [
   "black>=25.1",
   "httpx>=0.28,<0.29",
-  "pytest==9.0.2",
+  "pytest==9.0.3",
   "pytest-watch>=4.2,<5",
 ]
 
