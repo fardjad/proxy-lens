@@ -5,15 +5,15 @@
     "": {
       "name": "ui",
       "dependencies": {
-        "@glideapps/glide-data-grid": "latest",
-        "preact": "latest",
-        "react": "latest",
-        "react-dom": "latest",
+        "@glideapps/glide-data-grid": "^6.0.3",
+        "preact": "^10.29.1",
+        "react": "^19.2.5",
+        "react-dom": "^19.2.5",
       },
       "devDependencies": {
-        "@biomejs/biome": "latest",
-        "bun-types": "latest",
-        "typescript": "latest",
+        "@biomejs/biome": "^2.4.14",
+        "bun-types": "^1.3.13",
+        "typescript": "^6.0.3",
       },
     },
   },
